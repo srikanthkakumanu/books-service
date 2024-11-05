@@ -18,7 +18,7 @@ import java.util.UUID;
 public class BookDTO extends BaseDTO {
 
     @Valid
-    @Size(min = 1, max = 30, message = "title must be between 1 and 30 characters")
+    @Size(min = 1, max = 100, message = "title must be between 1 and 100 characters")
     private String title;
 
     @Size(min = 1, max = 100, message = "description must be between 1 and 100 characters")

@@ -1,6 +1,6 @@
 create table tbl_books (
     id varbinary(16) not null primary key,
-    title varchar(30) unique,
+    title varchar(100) unique,
     description varchar(100),
     isbn varchar(255),
     publisher varchar(255),

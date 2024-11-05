@@ -57,7 +57,9 @@ public class BooksDataInitializer implements CommandLineRunner {
         JsonNode edges = getEdges(json);
         for (JsonNode edge : edges) {
             counter += 1;
+            log.debug("counter: [{}]", counter);
             int idx = ThreadLocalRandom.current().nextInt(counter, numOfAuthors);
+            log.debug("idx: [{}]", idx);
             UUID authorId = allAuthors.get(idx).getId();
             allBooks.add(createBookFromNode(edge, authorId));
         }

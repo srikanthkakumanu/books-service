@@ -9,7 +9,6 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 
 import java.sql.Types;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
@@ -24,7 +23,7 @@ import java.util.UUID;
 public final class Book extends BaseEntity {
 
     @Valid
-    @Size(min = 1, max = 30, message = "title must be between 1 and 30 characters")
+    @Size(min = 1, max = 100, message = "title must be between 1 and 100 characters")
     private String title;
 
     @Size(min = 1, max = 100, message = "description must be between 1 and 100 characters")
