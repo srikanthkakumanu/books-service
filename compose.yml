@@ -1,0 +1,52 @@
+services:
+
+  # MariaDB
+  mariadb:
+    image: mariadb:latest
+    restart: on-failure
+    environment:
+      MARIADB_DATABASE: booksdb
+      #      MARIADB_USER: root
+      #      MARIADB_PASSWORD: root
+      MARIADB_ROOT_PASSWORD: root
+    #    expose:
+    #      - 40000
+    ports:
+      - 3306:3306
+    volumes:
+      - mariadb:/var/lib/mysql
+
+  # UI for MariaDB/MySQL
+  phpmyadmin:
+    image: phpmyadmin
+    restart: on-failure #always
+    expose:
+      - 40001
+    ports:
+      - 40001:80
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+
+# books micro service
+  books-service:
+    image: srik1980/books-service:1.0
+    build:
+      context: .
+    container_name: books-service
+    depends_on:
+      - mariadb
+      - phpmyadmin
+    ports:
+      - "9151:9151"
+    environment:
+      - SPRING_DATASOURCE_USERNAME=theuser
+      - SPRING_DATASOURCE_PASSWORD=theuser
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/booksdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+#      - SPRING_JPA_HIBERNATE_DDL_AUTO=create
+
+
+volumes:
+  mariadb:
+    driver: local

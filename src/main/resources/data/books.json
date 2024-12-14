@@ -1,0 +1,224 @@
+{
+  "books": [
+    {
+      "title": "The Enigma of Elysium",
+      "publisher": "Mystic Press",
+      "ISBN": "9781234567890"
+    },
+    {
+      "title": "Whispers in the Mist",
+      "publisher": "Gloaming Books",
+      "ISBN": "9789876543210"
+    },
+    {
+      "title": "Chronicles of Nebula",
+      "publisher": "Stellar Publishing",
+      "ISBN": "9782468135790"
+    },
+    {
+      "title": "Midnight Serenade",
+      "publisher": "Moonlit Press",
+      "ISBN": "9781357924680"
+    },
+    {
+      "title": "Echoes from Avalon",
+      "publisher": "Camelot Books",
+      "ISBN": "9780123456789"
+    },
+    {
+      "title": "Sapphire Skies",
+      "publisher": "Azure Publications",
+      "ISBN": "9789876543211"
+    },
+    {
+      "title": "The Alchemist's Legacy",
+      "publisher": "Alchemy House",
+      "ISBN": "9782468135791"
+    },
+    {
+      "title": "Crimson Moon",
+      "publisher": "Bloodstone Press",
+      "ISBN": "9781357924681"
+    },
+    {
+      "title": "Lost in the Labyrinth",
+      "publisher": "Minotaur Books",
+      "ISBN": "9780123456781"
+    },
+    {
+      "title": "Arcane Whispers",
+      "publisher": "Mystic Press",
+      "ISBN": "9781234567891"
+    },
+    {
+      "title": "The Forgotten Codex",
+      "publisher": "Gloaming Books",
+      "ISBN": "9789876543212"
+    },
+    {
+      "title": "Starlight Sonata",
+      "publisher": "Stellar Publishing",
+      "ISBN": "9782468135792"
+    },
+    {
+      "title": "Eternal Ember",
+      "publisher": "Moonlit Press",
+      "ISBN": "9781357924682"
+    },
+    {
+      "title": "Dreams of Avalon",
+      "publisher": "Camelot Books",
+      "ISBN": "9780123456782"
+    },
+    {
+      "title": "Celestial Harmony",
+      "publisher": "Azure Publications",
+      "ISBN": "9789876543213"
+    },
+    {
+      "title": "The Oracle's Veil",
+      "publisher": "Alchemy House",
+      "ISBN": "9782468135793"
+    },
+    {
+      "title": "Obsidian Shadows",
+      "publisher": "Bloodstone Press",
+      "ISBN": "9781357924683"
+    },
+    {
+      "title": "Whispers of the Wind",
+      "publisher": "Minotaur Books",
+      "ISBN": "9780123456783"
+    },
+    {
+      "title": "Eloquent JavaScript, Third Edition",
+      "publisher": "No Starch Press",
+      "ISBN": "9781593279509"
+    },
+    {
+      "title": "Practical Modern JavaScript",
+      "publisher": "O'Reilly Media",
+      "ISBN": "9781491943533"
+    },
+    {
+      "title": "Understanding ECMAScript 6",
+      "publisher": "No Starch Press",
+      "ISBN": "9781593277574"
+    },
+    {
+      "title": "Speaking JavaScript",
+      "publisher": "O'Reilly Media",
+      "ISBN": "9781449365035"
+    },
+    {
+      "title": "Learning JavaScript Design Patterns",
+      "publisher": "O'Reilly Media",
+      "ISBN": "9781449331818"
+    },
+    {
+      "title": "Clean Code: A Handbook of Agile Software Craftsmanship",
+      "publisher": "Prentice Hall",
+      "ISBN": "9780132350884"
+    },
+    {
+      "title": "Design Patterns: Elements of Reusable Object-Oriented Software",
+      "publisher": "Addison-Wesley Professional",
+      "ISBN": "9780201633610"
+    },
+    {
+      "title": "The Pragmatic Programmer: Your Journey to Mastery",
+      "publisher": "Addison-Wesley Professional",
+      "ISBN": "9780135957059"
+    },
+    {
+      "title": "Refactoring: Improving the Design of Existing Code",
+      "publisher": "Addison-Wesley Professional",
+      "ISBN": "9780201485677"
+    },
+    {
+      "title": "Clean Architecture: A Craftsman's Guide to Software Structure and Design",
+      "publisher": "Prentice Hall",
+      "ISBN": "9780134494166"
+    },
+    {
+      "title": "Effective Java",
+      "publisher": "Addison-Wesley Professional",
+      "ISBN": "9780134685991"
+    },
+    {
+      "title": "You Don't Know JS (book series)",
+      "publisher": "O'Reilly Media",
+      "ISBN": "Various ISBNs"
+    },
+    {
+      "title": "Python Crash Course",
+      "publisher": "No Starch Press",
+      "ISBN": "9781593276034"
+    },
+    {
+      "title": "Data Science for Business",
+      "publisher": "O'Reilly Media",
+      "ISBN": "9781449361327"
+    },
+    {
+      "title": "Introduction to the Theory of Computation",
+      "publisher": "Cengage Learning",
+      "ISBN": "9781133187790"
+    },
+    {
+      "title": "The Art of Computer Programming",
+      "publisher": "Addison-Wesley Professional",
+      "ISBN": "Various ISBNs"
+    },
+    {
+      "title": "Deep Learning",
+      "publisher": "MIT Press",
+      "ISBN": "9780262035613"
+    },
+    {
+      "title": "The Mythical Man-Month: Essays on Software Engineering",
+      "publisher": "Addison-Wesley Professional",
+      "ISBN": "9780201835953"
+    },
+    {
+      "title": "Cracking the Coding Interview",
+      "publisher": "CareerCup",
+      "ISBN": "9780984782857"
+    },
+    {
+      "title": "The Elements of Statistical Learning",
+      "publisher": "Springer",
+      "ISBN": "9780387848570"
+    },
+    {
+      "title": "Introduction to Algorithms",
+      "publisher": "MIT Press",
+      "ISBN": "9780262033848"
+    },
+    {
+      "title": "Head First Design Patterns",
+      "publisher": "O'Reilly Media",
+      "ISBN": "9780596007126"
+    },
+    {
+      "title": "Code: The Hidden Language of Computer Hardware and Software",
+      "publisher": "Microsoft Press",
+      "ISBN": "9780735611313"
+    },
+    {
+      "title": "The C Programming Language",
+      "publisher": "Prentice Hall",
+      "ISBN": "9780131103627"
+    },
+    {
+      "title": "Computer Networks",
+      "publisher": "Prentice Hall",
+      "ISBN": "9780132126953"
+    },
+    {
+      "title": "Artificial Intelligence: A Modern Approach",
+      "publisher": "Prentice Hall",
+      "ISBN": "9780136042594"
+    }
+  ]
+}

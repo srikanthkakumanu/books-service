@@ -1,0 +1,239 @@
+{
+  "authors": [
+    {
+      "first_name": "Evelyn",
+      "last_name": "Wren",
+      "genre": "Mystery"
+    },
+    {
+      "first_name": "Lucas",
+      "last_name": "Archer",
+      "genre": "Science Fiction"
+    },
+    {
+      "first_name": "Isabella",
+      "last_name": "Blake",
+      "genre": "Romance"
+    },
+    {
+      "first_name": "Nathan",
+      "last_name": "Fox",
+      "genre": "Thriller"
+    },
+    {
+      "first_name": "Sophie",
+      "last_name": "Hale",
+      "genre": "Fantasy"
+    },
+    {
+      "first_name": "Oliver",
+      "last_name": "Knight",
+      "genre": "Historical Fiction"
+    },
+    {
+      "first_name": "Emma",
+      "last_name": "Rivers",
+      "genre": "Contemporary"
+    },
+    {
+      "first_name": "Henry",
+      "last_name": "Stone",
+      "genre": "Adventure"
+    },
+    {
+      "first_name": "Grace",
+      "last_name": "Morgan",
+      "genre": "Young Adult"
+    },
+    {
+      "first_name": "Liam",
+      "last_name": "Reed",
+      "genre": "Dystopian"
+    },
+    {
+      "first_name": "Ava",
+      "last_name": "Hunter",
+      "genre": "Suspense"
+    },
+    {
+      "first_name": "Jackson",
+      "last_name": "Blair",
+      "genre": "Horror"
+    },
+    {
+      "first_name": "Zoe",
+      "last_name": "Marshall",
+      "genre": "Science Fantasy"
+    },
+    {
+      "first_name": "Maxwell",
+      "last_name": "Gray",
+      "genre": "Literary Fiction"
+    },
+    {
+      "first_name": "Chloe",
+      "last_name": "Bennett",
+      "genre": "Historical Romance"
+    },
+    {
+      "first_name": "Leo",
+      "last_name": "Foster",
+      "genre": "Psychological Thriller"
+    },
+    {
+      "first_name": "Harper",
+      "last_name": "Stone",
+      "genre": "Urban Fantasy"
+    },
+    {
+      "first_name": "Violet",
+      "last_name": "Adams",
+      "genre": "Paranormal"
+    },
+    {
+      "first_name": "Ethan",
+      "last_name": "Hart",
+      "genre": "Action"
+    },
+    {
+      "first_name": "Luna",
+      "last_name": "Knight",
+      "genre": "Supernatural"
+    },
+    {
+      "first_name": "Miles",
+      "last_name": "Parker",
+      "genre": "Humor"
+    },
+    {
+      "first_name": "Scarlett",
+      "last_name": "Hayes",
+      "genre": "Romantic Comedy"
+    },
+    {
+      "first_name": "Noah",
+      "last_name": "Wells",
+      "genre": "Historical Mystery"
+    },
+    {
+      "first_name": "Aria",
+      "last_name": "Brooks",
+      "genre": "Young Adult Fantasy"
+    },
+    {
+      "first_name": "Gabriel",
+      "last_name": "Stone",
+      "genre": "Science Adventure"
+    },
+    {
+      "first_name": "Ivy",
+      "last_name": "Montgomery",
+      "genre": "Magical Realism"
+    },
+    {
+      "first_name": "Samuel",
+      "last_name": "Gray",
+      "genre": "Crime Fiction"
+    },
+    {
+      "first_name": "Hazel",
+      "last_name": "Foster",
+      "genre": "Gothic"
+    },
+    {
+      "first_name": "Elijah",
+      "last_name": "Reed",
+      "genre": "Steampunk"
+    },
+    {
+      "first_name": "Aurora",
+      "last_name": "Fox",
+      "genre": "Space Opera"
+    },
+    {
+      "first_name": "Logan",
+      "last_name": "Brooks",
+      "genre": "Cyberpunk"
+    },
+    {
+      "first_name": "Clara",
+      "last_name": "Stone",
+      "genre": "Time Travel"
+    },
+    {
+      "first_name": "Finn",
+      "last_name": "Hudson",
+      "genre": "Post-Apocalyptic"
+    },
+    {
+      "first_name": "Linus",
+      "last_name": "Torvalds",
+      "genre": "Technology"
+    },
+    {
+      "first_name": "Guido",
+      "last_name": "van Rossum",
+      "genre": "Technology"
+    },
+    {
+      "first_name": "Martin",
+      "last_name": "Odersky",
+      "genre": "Technology"
+    },
+    {
+      "first_name": "James",
+      "last_name": "Gosling",
+      "genre": "Technology"
+    },
+    {
+      "first_name": "Bjarne",
+      "last_name": "Stroustrup",
+      "genre": "Technology"
+    },
+    {
+      "first_name": "Dennis",
+      "last_name": "Ritchie",
+      "genre": "Technology"
+    },
+    {
+      "first_name": "Tim",
+      "last_name": "Berners-Lee",
+      "genre": "Technology"
+    },
+    {
+      "first_name": "Josh",
+      "last_name": "Long",
+      "genre": "Technology"
+    },
+    {
+      "first_name": "Rasmus",
+      "last_name": "Lerdorf",
+      "genre": "Technology"
+    },
+    {
+      "first_name": "Ward",
+      "last_name": "Cunningham",
+      "genre": "Technology"
+    },
+    {
+      "first_name": "Dan",
+      "last_name": "Vega",
+      "genre": "Technology"
+    },
+    {
+      "first_name": "Anton",
+      "last_name": "Putra",
+      "genre": "Technology"
+    },
+    {
+      "first_name": "Larry",
+      "last_name": "Wall",
+      "genre": "Technology"
+    },
+    {
+      "first_name": "Ken",
+      "last_name": "Thompson",
+      "genre": "Technology"
+    }
+  ]
+}
