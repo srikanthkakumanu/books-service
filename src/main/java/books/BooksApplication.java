@@ -10,7 +10,6 @@ import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
 @ComponentScan("books")
-@EnableDiscoveryClient
 public class BooksApplication {
 
     public static void main(String[] args) {
