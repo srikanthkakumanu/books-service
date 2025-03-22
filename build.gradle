@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.4.1'
+	id 'org.springframework.boot' version '3.4.4'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -13,10 +13,10 @@ java {
 }
 
 ext {
-	ASSERTJ_VERSION = '3.26.3'
-	OPEN_API_VERSION = '2.6.0'
+	ASSERTJ_VERSION = '4.0.0-M1'
+	OPEN_API_VERSION = '2.8.5'
 	LOGSTASH_LOGBACK_ENCODER_VERSION = '8.0'
-	MAPSTRUCT_VERSION = '1.6.2'
+	MAPSTRUCT_VERSION = '1.6.3'
 	LOMBOK_VERSION = '1.18.34'
 	MAPSTRUCT_LOMBOK_BINDING_VERSION = '0.2.0'
 	set('springCloudVersion', "2024.0.0")
