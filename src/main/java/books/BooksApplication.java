@@ -9,7 +9,6 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@EnableDiscoveryClient
 @ComponentScan("books")
 public class BooksApplication {
 
