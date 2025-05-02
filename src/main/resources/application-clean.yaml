@@ -1,2 +1,4 @@
 # by default, it is true, but it should be false only for local DEV environment and not for STAGING/QA/PROD.
-spring.flyway.clean-disabled=false
+spring:
+  flyway:
+    clean-disabled: false

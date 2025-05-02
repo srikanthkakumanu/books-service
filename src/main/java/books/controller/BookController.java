@@ -26,6 +26,12 @@ public class BookController {
         this.service = bookService;
     }
 
+    @GetMapping("/ping")
+    private ResponseEntity<?> ping() {
+        log.debug("Ping");
+        return ResponseEntity.ok("Pong");
+    }
+
     @GetMapping
     private ResponseEntity<Iterable<BookDTO>> getBooks() {
         log.debug("Fetch all books");

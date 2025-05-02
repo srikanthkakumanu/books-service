@@ -1,0 +1,41 @@
+logging:
+  level:
+    books: debug
+    org.springframework.web: debug
+    org.springframework.statemachine.support: error
+    org:
+      hibernate: ERROR
+      hibernate.type.descriptor.sql: trace
+  pattern:
+    level: "${LOGPATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}"
+#    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+  file:
+    name: logs/books-service.log
+    max-size: 10MB
+    max-history: 10
+#  org.springframework:
+#    web:
+#      filter:
+#        CommonsRequestLoggingFilter: DEBUG
+
+spring:
+  datasource:
+    username: theuser
+    password: theuser
+    url: jdbc:mariadb://mariadb:3306/booksdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+  jpa:
+    database:
+      ddl-auto: validate
+  sql:
+    init:
+      mode: always
+
+  flyway:
+    user: bookadmin
+    password: bookadmin
+    sql-migration-prefix: V
+    repeatable-sql-migration-prefix: R
+    sql-migration-separator: __
+    sql-migration-suffixes: .sql
+    locations: classpath:db/migration,filesystem:/another/migration/directory
+

@@ -1,0 +1,106 @@
+spring:
+  application:
+    name: "${SPRING_APP_NAME:books-service}"
+  threads:
+    virtual:
+      enabled: true
+  jackson:
+    mapper:
+      accept-case-insensitive-properties: true
+  jpa:
+    hibernate:
+#      ddl-auto: create
+      ddl-auto: validate
+    defer-datasource-initialization: false
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+    show-sql: true
+  sql:
+    init:
+      mode: always
+  datasource:
+    username: theuser
+    password: theuser
+    url: jdbc:mariadb://mariadb:3306/booksdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+
+  # Flyway
+  flyway:
+    userDomain: bookadmin
+    password: bookadmin
+    sql-migration-prefix: V
+    repeatable-sql-migration-prefix: R
+    sql-migration-separator: __
+    sql-migration-suffixes: .sql
+
+  # Swagger/Open API
+  # http://localhost:9151/swagger-ui/index.html
+  doc:
+    api-docs:
+      path: /api-docs
+    swagger-ui:
+      operationsSorter: method
+    show-actuator: true
+
+server:
+  port: 9151
+
+apiKey: apikey111,apikey222
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-discovery-service:9111/eureka
+#  instance:
+#    preferIpAddress: true
+
+
+logging:
+  level:
+    books: debug
+    org.springframework.web: debug
+    org:
+      hibernate: ERROR
+      hibernate.type.descriptor.sql: trace
+  pattern:
+    level: "${LOGPATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}"
+#    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+  file:
+    name: logs/books-service.log
+    max-size: 10MB
+    max-history: 10
+#  org.springframework:
+#    web:
+#      filter:
+#        CommonsRequestLoggingFilter: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, beans, env, metrics, auditevents, httptrace, loggers, threaddump
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true
+    build:
+      enabled: true
+    git:
+      enabled: true
+      mode: full
+    java:
+      enabled: true
+    os:
+      enabled: true
+
+info:
+  app:
+    name: "${spring.application.name}"
+    #description: "Example Books microservice"
+    #version: "1.0.0"
+    #author: "Srikanth"
+    #docs: "http://skakumanu.dev"
+
