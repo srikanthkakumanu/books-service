@@ -19,7 +19,7 @@ ext {
 	MAPSTRUCT_VERSION = '1.6.3'
 	LOMBOK_VERSION = '1.18.34'
 	MAPSTRUCT_LOMBOK_BINDING_VERSION = '0.2.0'
-	set('springCloudVersion', "2024.0.0")
+	set('springCloudVersion', "2024.0.1")
 }
 
 configurations {
