@@ -1,16 +1,25 @@
 spring:
   application:
     name: "${SPRING_APP_NAME:books-service}"
-  threads:
+  devtools:
+    restart:
+      enabled: true
+
+  threads: # Enable Virtual threads
     virtual:
       enabled: true
+
+  # Jackson JSON mapper
   jackson:
     mapper:
       accept-case-insensitive-properties: true
+
+  # JPA Hibernate
+  # https://medium.com/@rihab.beji099/hibernate-schema-management-get-it-right-fast-spring-jpa-hibernate-ddl-auto-cfd86830daa2
   jpa:
-    hibernate:
-#      ddl-auto: create
-      ddl-auto: validate
+    hibernate: # create/update/validate/create-drop/none
+      ddl-auto: "${SPRING_JPA_HIBERNATE_DDL_AUTO:update}"
+#      ddl-auto: "${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}"
     defer-datasource-initialization: false
     properties:
       hibernate:
@@ -21,9 +30,9 @@ spring:
     init:
       mode: always
   datasource:
-    username: theuser
-    password: theuser
-    url: jdbc:mariadb://mariadb:3306/booksdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+    username: "${SPRING_DATASOURCE_USERNAME:theuser}"
+    password: "${SPRING_DATASOURCE_PASSWORD:theuser}"
+    url: "jdbc:mariadb://172.18.0.2:3306/booksdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC"
 
   # Flyway
   flyway:
@@ -33,6 +42,13 @@ spring:
     repeatable-sql-migration-prefix: R
     sql-migration-separator: __
     sql-migration-suffixes: .sql
+
+#  # API Gateway
+#  cloud:
+#    gateway:
+#      discovery:
+#        locator:
+#          enabled: true # Automatic Routing of API Gateway
 
   # Swagger/Open API
   # http://localhost:9151/swagger-ui/index.html
@@ -46,16 +62,18 @@ spring:
 server:
   port: 9151
 
-apiKey: apikey111,apikey222
+api-key: apikey111,apikey222
 
+# Eureka Service Discovery
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://eureka-discovery-service:9111/eureka
+      defaultZone: "${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-discovery-service:9111/eureka}"
 #  instance:
 #    preferIpAddress: true
 
 
+# Logging config
 logging:
   level:
     books: debug
@@ -64,17 +82,18 @@ logging:
       hibernate: ERROR
       hibernate.type.descriptor.sql: trace
   pattern:
-    level: "${LOGPATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}"
+    level: "${LOG_PATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}"
 #    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
-  file:
-    name: logs/books-service.log
-    max-size: 10MB
-    max-history: 10
+#  file:
+#    name: logs/books-service.log
+#    max-size: 10MB
+#    max-history: 10
 #  org.springframework:
 #    web:
 #      filter:
 #        CommonsRequestLoggingFilter: DEBUG
 
+# Actuator Config
 management:
   endpoints:
     web:
