@@ -45,6 +45,8 @@ services:
 #      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/booksdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
 #      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
 ##      - SPRING_JPA_HIBERNATE_DDL_AUTO=create
+#        - ROOT_LOG_LEVEL=debug
+#        - LOG_PATTERN_CONSOLE=%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n
 
 
 volumes:
