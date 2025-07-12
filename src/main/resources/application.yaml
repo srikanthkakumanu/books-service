@@ -1,4 +1,5 @@
 spring:
+  profiles.active: ${SPRING_ACTIVE_PROFILE:dev}
   application:
     name: "${SPRING_APP_NAME:books-service}"
   devtools:
