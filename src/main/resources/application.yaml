@@ -26,14 +26,13 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
-    show-sql: true
   sql:
     init:
       mode: always
   datasource:
     username: "${SPRING_DATASOURCE_USERNAME:theuser}"
     password: "${SPRING_DATASOURCE_PASSWORD:theuser}"
-    url: "jdbc:mariadb://172.18.0.2:3306/booksdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC"
+    url: "${SPRING_DATASOURCE_URL:jdbc:mariadb://mariadb:3306/booksdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC}"
 
   # Flyway
   flyway:
@@ -44,12 +43,12 @@ spring:
     sql-migration-separator: __
     sql-migration-suffixes: .sql
 
-#  # API Gateway
-#  cloud:
-#    gateway:
-#      discovery:
-#        locator:
-#          enabled: true # Automatic Routing of API Gateway
+  # API Gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true # Automatic Routing of API Gateway
 
   # Swagger/Open API
   # http://localhost:9151/swagger-ui/index.html
@@ -72,16 +71,18 @@ eureka:
       defaultZone: "${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-discovery-service:9111/eureka}"
 #  instance:
 #    preferIpAddress: true
+    instance-id: "${spring.application.name}:${spring.application.instance_id:${random.value}}"
 
 
 # Logging config
 logging:
   level:
-    books: debug
-    org.springframework.web: debug
+    root: ${ROOT_LOG_LEVEL:info}
+#    books: debug
+#    org.springframework.web: error
     org:
-      hibernate: ERROR
-      hibernate.type.descriptor.sql: trace
+      hibernate: info
+      hibernate.type.descriptor.sql: info
   pattern:
     level: "${LOG_PATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}"
 #    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"

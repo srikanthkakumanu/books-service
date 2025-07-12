@@ -2,24 +2,34 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.4.7'
 	id 'io.spring.dependency-management' version '1.1.7'
+	//id 'org.graalvm.buildtools.native' version '0.10.2'
 }
 
 group = 'books-service'
 version = '1.0'
-description = 'A micro-service for books module/domain'
+description = 'A micro service for Books Domain/Module'
 
 java {
 	sourceCompatibility = '21'
 }
 
+// For Spring Boot Actuator to show build information
+springBoot {
+	buildInfo()
+}
+
+repositories {
+	mavenCentral()
+}
+
+// Centralized dependency versions
 ext {
-	ASSERTJ_VERSION = '4.0.0-M1'
-	OPEN_API_VERSION = '2.8.5'
-	LOGSTASH_LOGBACK_ENCODER_VERSION = '8.0'
-	MAPSTRUCT_VERSION = '1.6.3'
-	LOMBOK_VERSION = '1.18.34'
-	MAPSTRUCT_LOMBOK_BINDING_VERSION = '0.2.0'
 	set('springCloudVersion', "2024.0.1")
+	openApiVersion = '2.8.5'
+	logstashLogbackEncoderVersion = '8.0'
+	mapstructVersion = '1.6.3'
+	lombokVersion = '1.18.34'
+	mapstructLombokBindingVersion = '0.2.0'
 }
 
 configurations {
@@ -28,35 +38,41 @@ configurations {
 	}
 }
 
-repositories {
-	mavenLocal()
-	mavenCentral()
-	google()
-}
-
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// Spring Cloud for Service Discovery
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-//	implementation "net.logstash.logback:logstash-logback-encoder:${LOGSTASH_LOGBACK_ENCODER_VERSION}"
+
+	// Database & Migrations
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-mysql'
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
-
-	implementation "org.mapstruct:mapstruct:${MAPSTRUCT_VERSION}"
-	annotationProcessor "org.projectlombok:lombok-mapstruct-binding:${MAPSTRUCT_LOMBOK_BINDING_VERSION}"
-	annotationProcessor "org.mapstruct:mapstruct-processor:${MAPSTRUCT_VERSION}"
-	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${OPEN_API_VERSION}"
-
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 
+	// API Documentation
+	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${openApiVersion}"
+
+	// Logging
+	implementation "net.logstash.logback:logstash-logback-encoder:${logstashLogbackEncoderVersion}"
+
+	// Developer Tools
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+
+// Code Generation & Mapping
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+	annotationProcessor "org.projectlombok:lombok-mapstruct-binding:${mapstructLombokBindingVersion}"
+
+	// Testing
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	// 'spring-boot-starter-test' includes JUnit 5, Mockito, and AssertJ.
+	// No need for explicit 'junit-platform-launcher' or 'assertj-core' unless overriding versions.
 }
 
 dependencyManagement {
@@ -65,11 +81,8 @@ dependencyManagement {
 	}
 }
 
-bootJar {
-	archiveFileName = "${project.group}" + "-" + "${project.version}" + ".jar"
-}
-
-tasks.named('test') {
+// This section provides detailed test output to the terminal, which is great for debugging.
+test {
 	useJUnitPlatform()
 
 	testLogging {
@@ -84,3 +97,19 @@ tasks.named('test') {
 		showStandardStreams = false
 	}
 }
+
+/*
+// This is an example configuration for creating a performance-tuned Docker image
+// using Spring Boot's Paketo Buildpacks integration.
+bootBuildImage {
+	publish = true
+	// JVM performance tuned
+	environment = [
+		'BP_JVM_VERSION': '21',
+		'BP_JVM_TYPE': 'JRE',
+		'BPE_DELIM_JAVA_TOOL_OPTIONS': ' ',
+		'BPE_APPEND_JAVA_TOOL_OPTIONS': '-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:MinHeapFreeRatio=20 -XX:MaxHeapFreeRatio=40 -XX:+HeapDumpOnOutOfMemoryError -Xms512m -Xmx512m -Djava.security.egd=file:/dev/./urandom',
+		'BPE_JVM_THREAD_COUNT': '100'
+	]
+}
+*/
