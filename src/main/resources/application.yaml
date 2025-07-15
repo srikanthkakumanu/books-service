@@ -49,6 +49,17 @@ spring:
       discovery:
         locator:
           enabled: true # Automatic Routing of API Gateway
+    # Vault Configuration
+    vault:
+      host: ${VAULT_HOST:localhost}
+      port: ${VAULT_PORT:8200}
+      scheme: http
+      authentication: TOKEN
+      token: ${VAULT_TOKEN:srikanth}
+      kv:
+        enabled: true
+        backend: secret
+        profile-separator: /
 
   # Swagger/Open API
   # http://localhost:9151/swagger-ui/index.html

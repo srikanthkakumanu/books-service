@@ -1,6 +1,6 @@
 spring:
   application:
-    name: "${SPRING_APP_NAME:books-service}"
+    name: ${SPRING_APP_NAME:books-service}
   devtools:
     restart:
       enabled: true
@@ -18,7 +18,7 @@ spring:
   # https://medium.com/@rihab.beji099/hibernate-schema-management-get-it-right-fast-spring-jpa-hibernate-ddl-auto-cfd86830daa2
   jpa:
     hibernate: # create/update/validate/create-drop/none
-      ddl-auto: "${SPRING_JPA_HIBERNATE_DDL_AUTO:update}"
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     #      ddl-auto: "${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}"
     defer-datasource-initialization: false
     properties:
@@ -29,9 +29,9 @@ spring:
     init:
       mode: always
   datasource:
-    username: "${SPRING_DATASOURCE_USERNAME:theuser}"
-    password: "${SPRING_DATASOURCE_PASSWORD:theuser}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:mariadb://mariadb:3306/booksdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC}"
+    username: ${SPRING_DATASOURCE_USERNAME:theuser}
+    password: ${SPRING_DATASOURCE_PASSWORD:theuser}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mariadb://mariadb:3306/booksdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC}
 
   # Flyway
   flyway:
@@ -48,6 +48,17 @@ spring:
       discovery:
         locator:
           enabled: true # Automatic Routing of API Gateway
+    # Vault Configuration
+    vault:
+      host: ${VAULT_HOST:localhost}
+      port: ${VAULT_PORT:8200}
+      scheme: http
+      authentication: TOKEN
+      token: ${VAULT_TOKEN:srikanth}
+      kv:
+        enabled: true
+        backend: secret
+        profile-separator: /
 
   # Swagger/Open API
   # http://localhost:9151/swagger-ui/index.html
@@ -67,7 +78,7 @@ api-key: apikey111,apikey222
 eureka:
   client:
     serviceUrl:
-      defaultZone: "${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-discovery-service:9111/eureka}"
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-discovery-service:9111/eureka}
   instance:
 #    preferIpAddress: true
     instance-id: "${spring.application.name}:${spring.application.instance_id:${random.value}}"
@@ -83,7 +94,7 @@ logging:
       hibernate: info
       hibernate.type.descriptor.sql: info
   pattern:
-    level: "${LOG_PATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}"
+    level: ${LOG_PATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}
 #    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
 #  file:
 #    name: logs/books-service.log
@@ -118,7 +129,7 @@ management:
 
 info:
   app:
-    name: "${spring.application.name}"
+    name: ${spring.application.name}
     #description: "Example Books microservice"
     #version: "1.0.0"
     #author: "Srikanth"
