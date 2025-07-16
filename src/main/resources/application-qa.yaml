@@ -32,8 +32,8 @@ spring:
     defer-datasource-initialization: false
     properties:
       hibernate:
-        show_sql: true
-        format_sql: true
+        show_sql: ${SPRING_JPA_HIBERNATE_SHOW_SQL:false}
+        format_sql: ${SPRING_JPA_HIBERNATE_FORMAT_SQL:false}
   sql:
     init:
       mode: always
