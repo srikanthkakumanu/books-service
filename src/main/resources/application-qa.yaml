@@ -1,6 +1,15 @@
 spring:
   application:
-    name: "${SPRING_APP_NAME:books-service}"
+    name: ${SPRING_APP_NAME:books-service}
+
+  # Use the modern 'spring.config.import' to declaratively load secrets from Vault.
+  # This is cleaner and more powerful than the old property-based approach.
+  config:
+    import:
+      - vault://secret/data/db/booksdb/qa
+      - vault://secret/data/ms/security/auth/qa
+      - vault://secret/data/api/keys/qa
+
   devtools:
     restart:
       enabled: true
@@ -18,8 +27,8 @@ spring:
   # https://medium.com/@rihab.beji099/hibernate-schema-management-get-it-right-fast-spring-jpa-hibernate-ddl-auto-cfd86830daa2
   jpa:
     hibernate: # create/update/validate/create-drop/none
-      ddl-auto: "${SPRING_JPA_HIBERNATE_DDL_AUTO:update}"
-    #      ddl-auto: "${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}"
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    #      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
     defer-datasource-initialization: false
     properties:
       hibernate:
@@ -29,14 +38,14 @@ spring:
     init:
       mode: always
   datasource:
-    username: "${SPRING_DATASOURCE_USERNAME:theuser}"
-    password: "${SPRING_DATASOURCE_PASSWORD:theuser}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:mariadb://mariadb:3306/booksdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC}"
+    username: ${user}
+    password: ${password}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mariadb://mariadb:3306/${db-name}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC}
 
   # Flyway
   flyway:
-    userDomain: bookadmin
-    password: bookadmin
+    userDomain: ${flw-user}
+    password: ${flw-password}
     sql-migration-prefix: V
     repeatable-sql-migration-prefix: R
     sql-migration-separator: __
@@ -59,6 +68,13 @@ spring:
         enabled: true
         backend: secret
         profile-separator: /
+      # Enable retry for connecting to Vault on startup. This is crucial for handling
+      # the race condition where the application starts before Vault is ready.
+      config:
+        retry:
+          enabled: true
+          max-attempts: 15
+          initial-interval: 2000 # 2 seconds
 
   # Swagger/Open API
   # http://localhost:9151/swagger-ui/index.html
@@ -70,16 +86,16 @@ spring:
     show-actuator: true
 
 server:
-  port: 9151
+  port: ${SERVER_PORT:9151}
 
-api-key: apikey111,apikey222
+api-key: ${api-key}
 
 # Eureka Service Discovery
 eureka:
   client:
     serviceUrl:
-      defaultZone: "${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-discovery-service:9111/eureka}"
-  instance:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-discovery-service:9111/eureka}
+    #  instance:
     #    preferIpAddress: true
     instance-id: "${spring.application.name}:${spring.application.instance_id:${random.value}}"
 
@@ -94,7 +110,7 @@ logging:
       hibernate: info
       hibernate.type.descriptor.sql: info
   pattern:
-    level: "${LOG_PATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}"
+    level: ${LOG_PATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}
 #    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
 #  file:
 #    name: logs/books-service.log
@@ -129,7 +145,7 @@ management:
 
 info:
   app:
-    name: "${spring.application.name}"
+    name: ${spring.application.name}
     #description: "Example Books microservice"
     #version: "1.0.0"
     #author: "Srikanth"
