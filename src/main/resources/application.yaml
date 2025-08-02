@@ -10,6 +10,7 @@ spring:
       - vault://secret/data/db/booksdb/dev
       - vault://secret/data/ms/security/auth/dev
       - vault://secret/data/api/keys/dev
+      - configserver:http://cloud-config-service:9311
 
   devtools:
     restart:

@@ -9,6 +9,7 @@ spring:
       - vault://secret/data/db/booksdb/dev
       - vault://secret/data/ms/security/auth/dev
       - vault://secret/data/api/keys/dev
+      - configserver:http://cloud-config-service:9311
 
   devtools:
     restart:
@@ -69,7 +70,7 @@ spring:
         backend: secret
         profile-separator: /
       # Enable retry for connecting to Vault on startup. This is crucial for handling
-      # the race condition where the application starts before Vault is ready.
+      # the race condition where the application starts before the Vault is ready.
       config:
         retry:
           enabled: true

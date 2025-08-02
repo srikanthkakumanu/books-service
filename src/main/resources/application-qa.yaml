@@ -9,6 +9,7 @@ spring:
       - vault://secret/data/db/booksdb/qa
       - vault://secret/data/ms/security/auth/qa
       - vault://secret/data/api/keys/qa
+      - configserver:http://cloud-config-service:9311
 
   devtools:
     restart:
