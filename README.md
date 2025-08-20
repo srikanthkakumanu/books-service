@@ -1,6 +1,6 @@
 # books-service
 
-A sample microservice for books
+A sample microservice for books and authors that uses Spring Boot, Flyway, Spring Cloud, Spring Eureka Service Discovery, Load Balancer, Hashicorp Vault, Cloud Bus, Cloud Config, MariaDB etc.
 
 
 ### Run
