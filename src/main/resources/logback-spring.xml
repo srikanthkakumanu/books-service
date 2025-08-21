@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--
+    This configuration combines human-readable JSON console logging with
+    rich, structured OTLP logging for robust observability.
+    -->
+
+    <!-- Include Spring Boot's default variables like ${CONSOLE_LOG_PATTERN} -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!--
+    Appender 1: JSON logging to the console.
+    This is great for local development and for log aggregators that parse stdout.
+    It uses logstash-logback-encoder to create structured JSON and automatically
+    includes trace context (trace.id, span.id) from the MDC.
+    -->
+    <appender name="jsonConsole" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <version/>
+                <logLevel/>
+                <message/>
+                <loggerName/>
+                <threadName/>
+                <context/>
+                <stackTrace>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                        <maxLength>2048</maxLength>
+                        <shortenedClassNameLength>20</shortenedClassNameLength>
+                        <rootCauseFirst>true</rootCauseFirst>
+                        <inlineHash>false</inlineHash>
+                        <exclude>\$\$FastClassByCGLIB\$\$|\$\$EnhancerBySpringCGLIB\$\$|^sun\.reflect\..*\.invoke|^com\.sun\.|^sun\.net\.|^net\.sf\.cglib\.proxy\.MethodProxy\.invoke|^org\.springframework\.cglib\.|^org\.springframework\.transaction\.|^org\.springframework\.validation\.|^org\.springframework\.app\.|^org\.springframework\.aop\.|^java\.lang\.reflect\.Method\.invoke|^org\.springframework\.ws\..*\.invoke|^org\.springframework\.ws\.transport\.|^org\.springframework\.ws\.soap\.saaj\.SaajSoapMessage\.|^org\.springframework\.ws\.client\.core\.WebServiceTemplate\.|^org\.springframework\.web\.filter\.|^org\.apache\.tomcat\.|^org\.apache\.catalina\.|^org\.apache\.coyote\.|^java\.util\.concurrent\.ThreadPoolExecutor\.runWorker|^java\.lang\.Thread\.run$</exclude>
+                    </throwableConverter>
+                </stackTrace>
+                <!-- This pattern injects trace context into a "trace" JSON object -->
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        {
+                          "trace.id": "%mdc{trace_id}",
+                          "span.id": "%mdc{span_id}"
+                        }
+                    </pattern>
+                </pattern>
+                <!-- Include all other MDC properties, but exclude the ones we handled manually -->
+                <mdc>
+                    <excludeMdcKeyName>trace_id</excludeMdcKeyName>
+                    <excludeMdcKeyName>span_id</excludeMdcKeyName>
+                </mdc>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!--
+    Appender 2: OpenTelemetry Appender.
+    This sends logs in the rich OTLP format directly to the OTel Collector.
+    This is the preferred way to integrate with the OpenTelemetry ecosystem.
+    -->
+    <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender">
+        <!-- Configuration is handled automatically by Spring Boot properties -->
+    </appender>
+
+    <root level="INFO">
+        <!-- Send logs to both appenders -->
+        <appender-ref ref="jsonConsole"/>
+        <appender-ref ref="OTEL"/>
+    </root>
+
+</configuration>

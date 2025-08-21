@@ -58,6 +58,7 @@ public class BookServiceImpl implements BookService {
                 return updated.get();
         }
 
+        // Create new book
         Book saved = repository.save(mapper.toDomain(dto));
         log.info("Generated Id after saving Book: {}", saved.getId());
         return mapper.toDTO(saved);
@@ -109,7 +110,7 @@ public class BookServiceImpl implements BookService {
                     log.error("Book with title {} not found", title);
                     return new BooksServiceException("id", HttpStatus.NOT_FOUND, "Book does not exist");
                 })
-                .parallelStream()
+                .stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
@@ -123,7 +124,7 @@ public class BookServiceImpl implements BookService {
                     log.error("Book with isbn {} not found", isbn);
                     return new BooksServiceException("isbn", HttpStatus.NOT_FOUND, "Book does not exist");
                 })
-                .parallelStream()
+                .stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
@@ -136,7 +137,7 @@ public class BookServiceImpl implements BookService {
                     log.error("Book with publisher {} not found", publisher);
                     return new BooksServiceException("publisher", HttpStatus.NOT_FOUND, "Book does not exist");
                 })
-                .parallelStream()
+                .stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
@@ -150,7 +151,7 @@ public class BookServiceImpl implements BookService {
                     log.error("Book with authorId {} not found", authorId);
                     return new BooksServiceException("authorId", HttpStatus.NOT_FOUND, "Book does not exist");
                 })
-                .parallelStream()
+                .stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
@@ -164,7 +165,7 @@ public class BookServiceImpl implements BookService {
                     log.error("Book with userId {} not found", userId);
                     return new BooksServiceException("userId", HttpStatus.NOT_FOUND, "Book does not exist");
                 })
-                .parallelStream()
+                .stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
@@ -178,7 +179,7 @@ public class BookServiceImpl implements BookService {
                     log.error("Book with userName {} not found", userName);
                     return new BooksServiceException("userName", HttpStatus.NOT_FOUND, "Book does not exist");
                 })
-                .parallelStream()
+                .stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }

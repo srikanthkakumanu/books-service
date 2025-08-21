@@ -1,16 +1,7 @@
 spring:
-  profiles.active: ${SPRING_ACTIVE_PROFILE:dev}
+  profiles.active: ${SPRING_PROFILES_ACTIVE:dev}
   application:
     name: ${SPRING_APP_NAME:books-service}
-
-  # Use the modern 'spring.config.import' to declaratively load secrets from Vault.
-  # This is cleaner and more powerful than the old property-based approach.
-  config:
-    import:
-      - vault://secret/data/db/booksdb/dev
-      - vault://secret/data/ms/security/auth/dev
-      - vault://secret/data/api/keys/dev
-      - configserver:http://cloud-config-service:9311
 
   devtools:
     restart:
@@ -29,7 +20,7 @@ spring:
   # https://medium.com/@rihab.beji099/hibernate-schema-management-get-it-right-fast-spring-jpa-hibernate-ddl-auto-cfd86830daa2
   jpa:
     hibernate: # create/update/validate/create-drop/none
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
 #      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
     defer-datasource-initialization: false
     properties:
@@ -40,43 +31,18 @@ spring:
     init:
       mode: always
   datasource:
-    username: ${user}
-    password: ${password}
-    url: ${SPRING_DATASOURCE_URL:jdbc:mariadb://mariadb:3306/${db-name}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC}
+    username: ${SPRING_DATASOURCE_USERNAME:booksadmin}
+    password: ${SPRING_DATASOURCE_PASSWORD:booksadmin}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/booksdb}
 
   # Flyway
   flyway:
-    userDomain: ${flw-user}
-    password: ${flw-password}
+    userDomain: ${FLYWAY_USERNAME:postgres}
+    password: ${FLYWAY_USERNAME:postgres}
     sql-migration-prefix: V
     repeatable-sql-migration-prefix: R
     sql-migration-separator: __
     sql-migration-suffixes: .sql
-
-  # API Gateway
-  cloud:
-    gateway:
-      discovery:
-        locator:
-          enabled: true # Automatic Routing of API Gateway
-    # Vault Configuration
-    vault:
-      host: ${VAULT_HOST:localhost}
-      port: ${VAULT_PORT:8200}
-      scheme: http
-      authentication: TOKEN
-      token: ${VAULT_TOKEN:srikanth}
-      kv:
-        enabled: true
-        backend: secret
-        profile-separator: /
-      # Enable retry for connecting to Vault on startup. This is crucial for handling
-      # the race condition where the application starts before Vault is ready.
-      config:
-        retry:
-          enabled: true
-          max-attempts: 15
-          initial-interval: 2000 # 2 seconds
 
   # Swagger/Open API
   # http://localhost:9151/swagger-ui/index.html
@@ -89,17 +55,6 @@ spring:
 
 server:
   port: ${SERVER_PORT:9151}
-
-api-key: ${api-key}
-
-# Eureka Service Discovery
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-discovery-service:9111/eureka}
-#  instance:
-#    preferIpAddress: true
-    instance-id: "${spring.application.name}:${spring.application.instance_id:${random.value}}"
 
 
 # Logging config
@@ -122,9 +77,25 @@ logging:
 #    web:
 #      filter:
 #        CommonsRequestLoggingFilter: DEBUG
+  config: classpath:logback-spring.xml
 
 # Actuator Config
 management:
+  # OpenTelemetry Configuration
+  opentelemetry:
+    service:
+      name: ${spring.application.name}
+    traces:
+      sampler:
+        probability: 1.0 # Sample all traces
+  otlp:
+    tracing:
+      endpoint: ${MANAGEMENT_OTLP_TRACING_ENDPOINT} # Removed default localhost fallback
+    metrics:
+      export:
+        # OTLP endpoint for metrics
+        url: ${MANAGEMENT_OTLP_METRICS_EXPORT_URL} # Changed placeholder name and removed default localhost fallback
+        step: 1m # How often to export metrics
   endpoints:
     web:
       exposure:
@@ -148,8 +119,7 @@ management:
 info:
   app:
     name: ${spring.application.name}
-    #description: "Example Books microservice"
+    #description: "A simple Books and Authors microservice"
     #version: "1.0.0"
     #author: "Srikanth"
     #docs: "http://skakumanu.dev"
-

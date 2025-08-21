@@ -15,13 +15,13 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
-@Profile({"default", "dev"})
+@Profile({ "default", "dev" })
 @Component
 @Order(2)
 public class BooksDataInitializer implements CommandLineRunner {
@@ -31,7 +31,7 @@ public class BooksDataInitializer implements CommandLineRunner {
     private final ObjectMapper objectMapper;
 
     public BooksDataInitializer(BookRepository bookRepository,
-                                AuthorRepository authorRepository, ObjectMapper objectMapper) {
+            AuthorRepository authorRepository, ObjectMapper objectMapper) {
         this.bookRepository = bookRepository;
         this.authorRepository = authorRepository;
         this.objectMapper = objectMapper;
@@ -39,9 +39,20 @@ public class BooksDataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        if (bookRepository.count() > 0) {
+            log.info("Books data already exists. Skipping initialization.");
+            return;
+        }
+
+        if (authorRepository.count() == 0) {
+            log.warn(
+                    "No authors found in the database. Skipping book data initialization. Ensure AuthorsDataInitializer runs first.");
+            return;
+        }
+
         log.debug("Loading Books Data..");
-        List<Author> allAuthors = new CopyOnWriteArrayList<>();
-        List<Book> allBooks = new CopyOnWriteArrayList<>();
+        List<Author> allAuthors;
+        List<Book> allBooks = new ArrayList<>();
         JsonNode json;
 
         try (InputStream inputStream = TypeReference.class.getResourceAsStream("/data/books.json")) {
@@ -52,22 +63,18 @@ public class BooksDataInitializer implements CommandLineRunner {
 
         allAuthors = authorRepository.findAll();
         int numOfAuthors = allAuthors.size();
-        int counter = 0;
 
         JsonNode edges = getEdges(json);
         for (JsonNode edge : edges) {
-            counter += 1;
-            log.debug("counter: [{}]", counter);
-            int idx = ThreadLocalRandom.current().nextInt(counter, numOfAuthors);
-            log.debug("idx: [{}]", idx);
-            UUID authorId = allAuthors.get(idx).getId();
+            // Pick a random author for the book
+            int randomAuthorIndex = ThreadLocalRandom.current().nextInt(numOfAuthors);
+            UUID authorId = allAuthors.get(randomAuthorIndex).getId();
             allBooks.add(createBookFromNode(edge, authorId));
         }
 
         bookRepository.saveAll(allBooks);
-        log.debug("Loaded Books Data.");
+        log.debug("Loaded {} Books into the database.", allBooks.size());
     }
-
 
     private Book createBookFromNode(JsonNode edge, UUID authorId) {
         String title = edge.get("title").asText();

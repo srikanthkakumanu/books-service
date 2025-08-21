@@ -1,14 +1,10 @@
 package books.domain;
 
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-
-import java.sql.Types;
 import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
@@ -32,14 +28,10 @@ public final class Book extends BaseEntity {
     private String isbn;
     private String publisher;
 
-    @JdbcTypeCode(value = Types.VARBINARY)
-    @Column(columnDefinition = "VARBINARY(16)", updatable = true, nullable = true)
     private UUID authorId;
 
     private Boolean completed;
 
-    @JdbcTypeCode(value = Types.VARBINARY)
-    @Column(columnDefinition = "VARBINARY(16)", updatable = true, nullable = true)
     private UUID userId;
 
     private String userName;
@@ -51,7 +43,8 @@ public final class Book extends BaseEntity {
         this.authorId = authorId;
     }
 
-    public Book(String title, String isbn, String publisher, UUID authorId, Boolean completed, UUID userId, String userName) {
+    public Book(String title, String isbn, String publisher, UUID authorId, Boolean completed, UUID userId,
+            String userName) {
         this.title = title;
         this.isbn = isbn;
         this.publisher = publisher;
@@ -69,6 +62,5 @@ public final class Book extends BaseEntity {
         this.userId = userId;
         this.userName = userName;
     }
-
 
 }

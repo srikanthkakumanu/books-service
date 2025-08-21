@@ -1,54 +1,99 @@
 services:
-
-  # MariaDB
-  mariadb:
-    image: mariadb:latest
+  # PostgreSQL
+  postgres:
+    image: postgres:latest
     restart: on-failure
     environment:
-      MARIADB_DATABASE: booksdb
-      #      MARIADB_USER: root
-      #      MARIADB_PASSWORD: root
-      MARIADB_ROOT_PASSWORD: root
-    #    expose:
-    #      - 40000
+      POSTGRES_DB: booksdb
+      POSTGRES_USER: booksadmin
+      POSTGRES_PASSWORD: booksadmin
     ports:
-      - 3306:3306
+      - 5432:5432
     volumes:
-      - mariadb:/var/lib/mysql
+      - postgres:/var/lib/postgresql/data
+      - ./src/main/scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U booksadmin -d booksdb']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # UI for MariaDB/MySQL
-  phpmyadmin:
-    image: phpmyadmin
-    restart: on-failure #always
-    expose:
-      - 40001
+  # UI for PostgreSQL
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: on-failure
     ports:
-      - 40001:80
+      - 5050:80
     environment:
-      PMA_HOST: mariadb
-      PMA_PORT: 3306
+      PGADMIN_DEFAULT_EMAIL: srikanthkakumanu@yahoo.com # admin account
+      PGADMIN_DEFAULT_PASSWORD: srikanth
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin:/var/lib/pgadmin
 
-## books micro service
-#  books-service:
-#    image: srik1980/books-service:1.0
-#    build:
-#      context: .
-#    container_name: books-service
-#    depends_on:
-#      - mariadb
-#      - phpmyadmin
-#    ports:
-#      - "9151:9151"
-#    environment:
-#      - SPRING_DATASOURCE_USERNAME=theuser
-#      - SPRING_DATASOURCE_PASSWORD=theuser
-#      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/booksdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
-#      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
-##      - SPRING_JPA_HIBERNATE_DDL_AUTO=create
-#        - ROOT_LOG_LEVEL=debug
-#        - LOG_PATTERN_CONSOLE=%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n
+  # OpenTelemetry Collector
+  otel-collector:
+    container_name: otel-collector
+    build:
+      context: .
+      dockerfile: Dockerfile.otel-collector
+    restart: on-failure
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./src/main/resources/otel/collector-config.yml:/etc/otel-collector-config.yml
+    ports:
+      - "13133:13133" # Health check
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    env_file:
+      - .env # Load environment variables from the .env file
+    healthcheck:
+      # The /health_check binary was removed from recent collector images.
+      # The new method is to query the health_check extension's HTTP endpoint.
+      # We use a custom-built image (see Dockerfile.otel-collector) to add curl.
+      test: ["CMD", "curl", "-f", "http://localhost:13133"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # Zipkin for distributed tracing
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    restart: on-failure
+    ports:
+      - '9411:9411'
+    depends_on:
+      - otel-collector
+
+  # books micro service
+  books-service:
+    # image: srikanthkakumanu/books-service:1.0
+    build:
+      context: .
+    container_name: books-service
+    restart: on-failure
+    ports:
+      - '9151:9151'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      otel-collector:
+        condition: service_healthy
+    env_file:
+      - .env # Load credentials and other config from the .env file
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/booksdb
+      # OTLP endpoints for the collector
+      - MANAGEMENT_OTLP_TRACING_ENDPOINT=http://otel-collector:4318/v1/traces
+      - MANAGEMENT_OTLP_METRICS_EXPORT_URL=http://otel-collector:4318/v1/metrics # Changed to match standard Spring Boot relaxed binding
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=http://otel-collector:4318/v1/logs
 
 volumes:
-  mariadb:
+  postgres:
+    driver: local
+  pgadmin:
     driver: local

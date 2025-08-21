@@ -1,0 +1,53 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+processors:
+  batch:
+  # The resource processor is used to add/modify resource attributes.
+  # Here, we're ensuring the service.name attribute is set.
+  resource:
+    attributes:
+      - key: service.name
+        value: "books-service"
+        action: insert
+
+exporters:
+  # For debugging the collector itself
+  debug:
+    verbosity: detailed
+
+  # Export traces to Zipkin
+  zipkin:
+    endpoint: "http://zipkin:9411/api/v2/spans"
+    format: proto
+
+  # Export traces, metrics, and logs to New Relic
+  otlphttp/newrelic:
+    # endpoint: "https://otlp.nr-data.net:4318" # US region endpoint
+    endpoint: "https://otlp.eu01.nr-data.net:4318" # EU region endpoint
+    headers:
+      api-key: "${NEW_RELIC_API_KEY}"
+
+extensions:
+  # Enables a health check endpoint for the collector, which is crucial for
+  # ensuring service dependencies start in the correct order.
+  health_check:
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [debug, zipkin] #, otlphttp/newrelic]
+    metrics:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [debug] #, otlphttp/newrelic]
+    logs:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [debug] #, otlphttp/newrelic]

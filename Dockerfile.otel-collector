@@ -1,0 +1,8 @@
+# Use a multi-stage build to get the curl binary without the whole image
+FROM curlimages/curl:latest as curl
+
+# Start from the official contrib collector image
+FROM otel/opentelemetry-collector-contrib:0.106.0
+
+# Copy the curl binary from the first stage into our collector image
+COPY --from=curl /usr/bin/curl /usr/bin/curl

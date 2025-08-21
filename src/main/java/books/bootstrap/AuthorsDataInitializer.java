@@ -14,11 +14,11 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
-@Profile({"default", "dev"})
+@Profile({ "default", "dev" })
 @Order(1)
 @Component
 public class AuthorsDataInitializer implements CommandLineRunner {
@@ -33,8 +33,13 @@ public class AuthorsDataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        if (authorRepository.count() > 0) {
+            log.info("Authors data already exists. Skipping initialization.");
+            return;
+        }
+
         log.debug("Loading Authors Data..");
-        List<Author> authors = new CopyOnWriteArrayList<>();
+        List<Author> authors = new ArrayList<>();
         JsonNode json;
 
         try (InputStream inputStream = TypeReference.class.getResourceAsStream("/data/authors.json")) {
@@ -49,7 +54,7 @@ public class AuthorsDataInitializer implements CommandLineRunner {
         }
 
         authorRepository.saveAll(authors);
-        log.debug("Loaded Authors Data.");
+        log.debug("Loaded {} Authors into the database.", authors.size());
     }
 
     private Author createAuthorFromNode(JsonNode edge) {

@@ -7,10 +7,17 @@ plugins {
 
 group = 'books-service'
 version = '1.0'
-description = 'A micro service for Books Domain/Module'
+description = 'A micro service for Books and Authors Domain/Module'
 
 java {
-	sourceCompatibility = '21'
+	sourceCompatibility = '24'
+}
+
+// For Mapstruct version
+ext {
+	mapstructVersion = "1.5.5.Final"
+	swaggerVersion = "2.5.0"
+	opentelemetryInstrumentationVersion = "2.6.0"
 }
 
 // For Spring Boot Actuator to show build information
@@ -22,66 +29,50 @@ repositories {
 	mavenCentral()
 }
 
-// Centralized dependency versions
-ext {
-	set('springCloudVersion', "2024.0.1")
-	openApiVersion = '2.8.5'
-	logstashLogbackEncoderVersion = '8.0'
-	mapstructVersion = '1.6.3'
-	lombokVersion = '1.18.34'
-	mapstructLombokBindingVersion = '0.2.0'
-}
-
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
+	// Exclude the Prometheus registry to avoid conflicts and warnings,
+	// as this application uses the OTLP registry for metrics.
+	// This is applied to all configurations to ensure it's not pulled in transitively.
+	all {
+		exclude group: 'io.micrometer', module: 'micrometer-registry-prometheus'
+	}
 }
 
 dependencies {
-	implementation 'org.springframework.cloud:spring-cloud-starter-config'
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.cloud:spring-cloud-starter-vault-config'
+  implementation 'org.springframework.boot:spring-boot-starter-actuator'
+  implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+  implementation 'org.springframework.boot:spring-boot-starter-graphql'
+  implementation 'org.springframework.boot:spring-boot-starter-validation'
+  implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${swaggerVersion}"
+  implementation 'org.springframework.boot:spring-boot-starter-web'
+  
+  implementation platform("io.opentelemetry:opentelemetry-bom:1.39.0")
+  implementation platform("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:${opentelemetryInstrumentationVersion}")
+  // OTLP Exporter to send data to the collector
+  implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+  // Logback appender to correlate logs with traces
+  implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.15.0-alpha'
 
-	// Spring Cloud for Service Discovery
-	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+  // For structured JSON logging to the console
+  implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 
-	// Database & Migrations
-	implementation 'org.flywaydb:flyway-core'
-	implementation 'org.flywaydb:flyway-mysql'
-	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
-
-	// API Documentation
-	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${openApiVersion}"
-
-	// Logging
-	implementation "net.logstash.logback:logstash-logback-encoder:${logstashLogbackEncoderVersion}"
-
-	// Developer Tools
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
-
-// Code Generation & Mapping
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
-	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
-	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
-	annotationProcessor "org.projectlombok:lombok-mapstruct-binding:${mapstructLombokBindingVersion}"
-
-	// Testing
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	// 'spring-boot-starter-test' includes JUnit 5, Mockito, and AssertJ.
-	// No need for explicit 'junit-platform-launcher' or 'assertj-core' unless overriding versions.
+  implementation 'org.flywaydb:flyway-core'
+  implementation 'org.flywaydb:flyway-database-postgresql'
+  implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+  compileOnly 'org.projectlombok:lombok'
+  developmentOnly 'org.springframework.boot:spring-boot-devtools'
+  runtimeOnly 'org.postgresql:postgresql'
+  annotationProcessor 'org.projectlombok:lombok'
+  annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+  annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+  testImplementation 'org.springframework.boot:spring-boot-starter-test'
+  testImplementation 'org.springframework.graphql:spring-graphql-test'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-dependencyManagement {
-	imports {
-		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
-	}
-}
 
 // This section provides detailed test output to the terminal, which is great for debugging.
 test {
