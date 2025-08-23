@@ -1,6 +1,6 @@
 # books-service
 
-A sample microservice for books and authors. This particular branch uses GraphQL, OpenTelemetry, Swagger, Zipkin, PostgreSQL.
+This repository contains a sample microservice for books and authors. This particular branch uses GraphQL, OpenTelemetry, Swagger, Zipkin, PostgreSQL.
 
 **Note**: Do not merge the branch with master/main branch.
 
