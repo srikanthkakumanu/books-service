@@ -848,3 +848,58 @@ The following capabilities are tracked as part of the wider platform roadmap:
    - Platform Orchestration: [`../micro-services/README.md`](../micro-services/README.md)
    - Configuration Management: [`../service-configs/README.md`](../service-configs/README.md)
    - IAM Implementation Checkpoint: [`../micro-services/IAM_IMPLEMENTATION_CHECKPOINT.md`](../micro-services/IAM_IMPLEMENTATION_CHECKPOINT.md)
+
+---
+
+## Maintainer Quick Reference
+
+This README is intentionally domain-heavy. The short version for daily operation is:
+
+| Concern | Current value |
+| --- | --- |
+| Application name | `books-service` |
+| HTTP port | `9151` |
+| Database | PostgreSQL `booksdb` |
+| Runtime DB role | `theuser` |
+| Flyway role | `bookadmin` |
+| Main API roots | `/api/books`, `/api/authors` |
+| Public endpoint | `GET /api/books/ping` |
+| API docs | `/api-docs`, `/swagger-ui.html` |
+| Config imports | Vault DB/keycloak paths and optional Config Server |
+| Discovery | Eureka client configured through `EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE` |
+
+Common commands from this repository root:
+
+```bash
+bash ./gradlew test
+bash ./gradlew integrationTest
+bash ./gradlew clean test integrationTest bootJar
+docker build -t books-service:latest .
+docker compose config --quiet
+docker compose up -d --build
+```
+
+Local host run against the service-local dependency ports:
+
+```bash
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:25432/booksdb
+export SPRING_DATASOURCE_USERNAME=theuser
+export SPRING_DATASOURCE_PASSWORD='<runtime password from local Vault/config>'
+export SPRING_FLYWAY_USER=bookadmin
+export SPRING_FLYWAY_PASSWORD='<migration password from local Vault/config>'
+export KEYCLOAK_ISSUER_URI=http://localhost:28080/realms/company-platform
+export SPRING_CLOUD_VAULT_ENABLED=false
+export SPRING_CLOUD_CONFIG_ENABLED=false
+bash ./gradlew bootRun
+```
+
+Representative smoke checks:
+
+```bash
+curl http://localhost:9151/actuator/health
+curl http://localhost:9151/api/books/ping
+curl -H "Authorization: Bearer $ACCESS_TOKEN" http://localhost:9151/api/books?page=0\&size=10
+curl -H "Authorization: Bearer $ACCESS_TOKEN" http://localhost:9151/api/authors?page=0\&size=10
+```
+
+When editing the service, keep framework dependencies out of `books.domain`, keep schema changes in Flyway, and update the gateway/platform docs when externally exposed routes change.
