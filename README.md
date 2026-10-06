@@ -1,6 +1,6 @@
 # books-service
 
-The catalog context of the platform: **books and their authors**. It is the first business service that runs on the identity platform, and it relies on that platform for everything about people:
+The catalog context of the platform: **books and their authors**. It is a business service on the identity platform (as is [`video-service`](../video-service/README.md), built the same way), and it relies on that platform for everything about people:
 
 - **Users** are the ones [`user-service`](../user-service/README.md) manages. This service stores no user data; a book only records the platform user ID of its owner.
 - **Login** happens at [`auth-service`](../auth-service/README.md). Nothing here is usable without a platform access token.
