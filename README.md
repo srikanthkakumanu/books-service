@@ -1,905 +1,311 @@
-# Books Service
-
-[![Java](https://img.shields.io/badge/Java-27-ED8B00?logo=openjdk&logoColor=white)](https://adoptium.net/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2025.1.3-6DB33F?logo=spring)](https://spring.io/projects/spring-cloud)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Flyway](https://img.shields.io/badge/Flyway-10+-CC0200?logo=flyway&logoColor=white)](https://flywaydb.org/)
-[![Keycloak](https://img.shields.io/badge/Keycloak-OAuth2%20OIDC-0081C9?logo=keycloak&logoColor=white)](https://www.keycloak.org/)
-
-**Books Service** is a core domain microservice responsible for maintaining the platform's central catalog of books and authors, including book ownership, author metadata, and catalog query capabilities.
-
-> [!NOTE]
-> **Service Boundaries**: Books Service is exclusively a metadata and catalog service. It does **not** store binary book assets (PDFs, EPUBs, audiobooks) nor manage content publishing/ingestion pipelines. Book files, DRM, and binary streaming are owned by downstream content storage services.
-
----
-
-## Table of Contents
-
-- [System Context & Ecosystem](#system-context--ecosystem)
-- [Architecture & Design Principles](#architecture--design-principles)
-  - [Clean / Hexagonal Architecture](#clean--hexagonal-architecture)
-  - [Package Layout](#package-layout)
-  - [Domain Invariants & Business Logic](#domain-invariants--business-logic)
-- [Security & Access Control](#security--access-control)
-  - [Authentication & JWT Token Structure](#authentication--jwt-token-structure)
-  - [Catalog Actor Resolution](#catalog-actor-resolution)
-  - [Access Control Matrix](#access-control-matrix)
-- [REST API Specification](#rest-api-specification)
-  - [Public Endpoints](#public-endpoints)
-  - [Book Endpoints](#book-endpoints)
-  - [Author Endpoints](#author-endpoints)
-  - [Pagination & Sorting Parameters](#pagination--sorting-parameters)
-- [Request & Response Payloads](#request--response-payloads)
-- [cURL Examples](#curl-examples)
-- [Error Handling & Problem Details](#error-handling--problem-details)
-- [Database Architecture & Migrations](#database-architecture--migrations)
-  - [PostgreSQL Schema](#postgresql-schema)
-  - [Dual-User Least Privilege Model](#dual-user-least-privilege-model)
-  - [Flyway Migrations](#flyway-migrations)
-  - [Sample Seed Data](#sample-seed-data)
-- [Configuration & Profiles](#configuration--profiles)
-  - [Spring Profiles](#spring-profiles)
-  - [Environment Variables Reference](#environment-variables-reference)
-- [Build, Toolchain & Testing](#build-toolchain--testing)
-  - [Java 27 & Gradle Launch Setup](#java-27--gradle-launch-setup)
-  - [Running Unit & MVC Tests](#running-unit--mvc-tests)
-  - [Running Integration Tests (Testcontainers)](#running-integration-tests-testcontainers)
-  - [Building Application Artifacts](#building-application-artifacts)
-- [Running Locally](#running-locally)
-  - [Option A: Standalone JVM with Local DB & Keycloak](#option-a-standalone-jvm-with-local-db--keycloak)
-  - [Option B: Complete Stack via Docker Compose](#option-b-complete-stack-via-docker-compose)
-- [Docker & Container Deployment](#docker--container-deployment)
-- [Observability & Actuator](#observability--actuator)
-- [Roadmap & Sibling Dependencies](#roadmap--sibling-dependencies)
-
----
-
-## System Context & Ecosystem
-
-Books Service operates within a distributed microservices platform:
-
-```mermaid
-flowchart TD
-    Client["Client / Web / Mobile App"] -->|"Bearer JWT"| Gateway["API Gateway / Edge Router"]
-    Gateway -->|"Proxied Request"| BooksService["Books Service (:9151)"]
-
-    subgraph Platform Infrastructure
-        Keycloak["Keycloak IAM (:8080 / :28080)\nRealm: company-platform"]
-        Postgres["PostgreSQL 18 (:5432 / :25432)\nDatabase: booksdb"]
-        Vault["HashiCorp Vault (:8200)"]
-        ConfigServer["Spring Cloud Config (:9311)"]
-        Eureka["Eureka Discovery (:9111)"]
-    end
-
-    BooksService -->|"Validate JWT (Public Key/JWKS)"| Keycloak
-    BooksService -->|"JDBC (theuser runtime / bookadmin flyway)"| Postgres
-    BooksService -.->|"Dynamic Secrets (Optional)"| Vault
-    BooksService -.->|"Externalized Properties"| ConfigServer
-    BooksService -.->|"Service Registration"| Eureka
-```
-
-- **Keycloak IAM**: Issues signed JWT access tokens containing user identity (`sub`) and realm roles (`roles`). Books Service operates as an OAuth2 Resource Server validating JWTs.
-- **PostgreSQL (`booksdb`)**: Persistent relational store with dedicated accounts for DDL migrations (`bookadmin`) and DML runtime (`theuser`).
-- **HashiCorp Vault**: External secret management providing database credentials and signing keys via Spring Cloud Vault.
-- **Spring Cloud Config Server**: Centralized configuration management across `dev`, `qa`, and `prod` stages.
-- **Eureka Discovery**: Service registry enabling dynamic service discovery across the platform.
-
----
-
-## Architecture & Design Principles
-
-### Clean / Hexagonal Architecture
-
-Books Service strictly adheres to **Clean Architecture** (Hexagonal / Ports & Adapters) principles:
-
-```mermaid
-flowchart LR
-    subgraph Infrastructure Layer
-        subgraph Web Adapter
-            Controllers["BookController\nAuthorController"]
-            Facades["BookServiceImpl\nAuthorServiceImpl"]
-            WebMappers["BookMapper\nAuthorMapper"]
-        end
-        subgraph Security Adapter
-            SecConfig["SecurityConfig"]
-            ActorExt["CurrentCatalogActor"]
-        end
-        subgraph Persistence Adapter
-            Stores["JpaBookStore\nJpaAuthorStore"]
-            Repos["BookRepository\nAuthorRepository"]
-            PersMappers["BookPersistenceMapper\nAuthorPersistenceMapper"]
-            Entities["Book (JPA)\nAuthor (JPA)"]
-        end
-    end
-
-    subgraph Application Layer
-        UseCaseServices["BookCatalogService\nAuthorCatalogService"]
-    end
-
-    subgraph Domain Layer
-        InboundPorts["BookCatalog (in)\nAuthorCatalog (in)"]
-        OutboundPorts["BookStore (out)\nAuthorStore (out)"]
-        DomainModels["Book\nAuthor\nCatalogActor\nBookChanges\nAuthorChanges\nAuthorQuery"]
-    end
-
-    Controllers --> Facades
-    Facades --> ActorExt
-    Facades --> InboundPorts
-    InboundPorts --> UseCaseServices
-    UseCaseServices --> DomainModels
-    UseCaseServices --> OutboundPorts
-    OutboundPorts --> Stores
-    Stores --> Repos
-    Repos --> Entities
-```
-
-1. **Domain Layer (`books.domain`)**:
-   - Zero framework dependencies (no Spring, no Hibernate, no Jackson).
-   - Immutable records model core concepts: `Book`, `Author`, `CatalogActor`, `BookChanges`, `AuthorChanges`, `AuthorQuery`.
-   - Encapsulates business invariants, validation, access checks, and state transitions.
-   - Defines inbound use case ports (`BookCatalog`, `AuthorCatalog`) and outbound storage ports (`BookStore`, `AuthorStore`).
-2. **Application Layer (`books.application.usecase`)**:
-   - Implements inbound ports (`BookCatalogService`, `AuthorCatalogService`).
-   - Orchestrates domain interactions and manages `@Transactional(readOnly = true)` boundaries.
-   - Independent of transport formats (HTTP, JSON) and relational databases.
-3. **Infrastructure Layer (`books.infrastructure`)**:
-   - **Web**: Spring MVC REST controllers (`BookController`, `AuthorController`), DTO contracts, validation constraints, MapStruct DTO mappers, and `GlobalExceptionHandler`.
-   - **Security**: Stateless OAuth2 Resource Server configuration, JWT conversion (`KeycloakRealmRoleConverter`), and security context resolution (`CurrentCatalogActor`).
-   - **Persistence**: Spring Data JPA repositories, JPA entities (`tbl_books`, `tbl_authors`), MapStruct entity mappers, and repository implementations (`JpaBookStore`, `JpaAuthorStore`).
-
-### Package Layout
-
-```
-src/main/java/books/
-├── BooksApplication.java                      # Spring Boot main entrypoint
-├── domain/                                    # Framework-free Core Domain
-│   ├── model/
-│   │   ├── Book.java                          # Immutable Book domain aggregate
-│   │   ├── Author.java                        # Immutable Author domain aggregate
-│   │   ├── CatalogActor.java                  # Requesting actor identity & roles
-│   │   ├── BookChanges.java                   # Value object for book mutations
-│   │   ├── AuthorChanges.java                 # Value object for author mutations
-│   │   ├── AuthorQuery.java                   # Search & pagination specification
-│   │   └── *Exception.java                    # Domain exceptions (BookNotFound, etc.)
-│   └── port/
-│       ├── in/                                # Driving / Use Case Ports
-│       │   ├── BookCatalog.java
-│       │   └── AuthorCatalog.java
-│       └── out/                               # Driven / Persistence Ports
-│           ├── BookStore.java
-│           └── AuthorStore.java
-├── application/
-│   └── usecase/                               # Use case services & orchestration
-│       ├── BookCatalogService.java
-│       └── AuthorCatalogService.java
-└── infrastructure/                            # Adapters & framework wiring
-    ├── config/                                # Spring configurations (Logging, Flyway)
-    ├── security/                              # JWT & CatalogActor adapter
-    ├── web/                                   # REST Controllers, DTOs, Mappers, Exceptions
-    └── persistence/                           # JPA Entities, Repositories, Flyway, Stores
-```
-
-### Domain Invariants & Business Logic
-
-- **Book Validation**:
-  - `title`: Required, 1 to 100 characters, whitespace automatically stripped. Must be unique in the database.
-  - `description`: Optional, maximum 100 characters.
-  - `completed`: Normalized to `false` when `null`.
-- **Author Validation**:
-  - `firstName`: Required, 1 to 255 characters, whitespace automatically stripped.
-  - `lastName`: Optional, maximum 255 characters.
-  - `genre`: Optional, maximum 255 characters.
-- **Ownership & Anti-Spoofing Rules**:
-  - Ordinary users **cannot** spoof book ownership (`userId`). Even if a request payload supplies an arbitrary `userId`, domain rules enforce that newly created books are bound to the caller's JWT `sub`.
-  - Non-manager users **cannot transfer book ownership**. Any patch attempt to modify `userId` throws a `CatalogAccessDeniedException`.
-  - Catalog managers (`ROLE_ADMIN`, `ROLE_MANAGER`) are permitted to assign or reassign book ownership to any valid UUID.
-- **Author Modification Guard**:
-  - Creating, updating, or deleting authors requires catalog manager privileges (`ROLE_ADMIN` or `ROLE_MANAGER`). Ordinary users receive `403 Forbidden`.
-
----
-
-## Security & Access Control
-
-### Authentication & JWT Token Structure
-
-The service operates as a stateless OAuth2 Resource Server. Every request (outside explicit public endpoints) requires a valid Bearer token in the `Authorization` header:
-
-```http
-Authorization: Bearer <Keycloak-JWT-Token>
-```
-
-The JWT is validated against Keycloak's public JWKS endpoint (`KEYCLOAK_ISSUER_URI`). The token must contain:
-- `sub`: User ID formatted as a valid UUID (e.g. `c0a80101-0000-0000-0000-000000000001`).
-- `realm_access.roles`: Array of realm-level roles (e.g., `["USER", "MANAGER", "ADMIN"]`).
-- `scope`: Space-delimited OAuth2 scopes (e.g. `openid catalog.read`).
-
-`KeycloakRealmRoleConverter` converts these claims into Spring Security authorities:
-- Realm roles become `ROLE_<role>` (e.g., `ROLE_ADMIN`, `ROLE_MANAGER`, `ROLE_USER`).
-- Scopes become `SCOPE_<scope>` (e.g., `SCOPE_openid`, `SCOPE_catalog.read`).
-
-### Catalog Actor Resolution
-
-`CurrentCatalogActor` resolves the current security context into a `CatalogActor`:
-- Extracts the caller's UUID from `jwt.getToken().getSubject()`.
-- Sets `managesCatalog = true` if the caller holds `ROLE_ADMIN` or `ROLE_MANAGER`.
-- Rejects requests with `403 Forbidden` if the subject is missing or not a valid UUID.
-
-### Access Control Matrix
-
-| Operation | HTTP / Endpoint | Public | User (`ROLE_USER`) | Manager / Admin (`ROLE_ADMIN`, `ROLE_MANAGER`) |
-|---|---|:---:|:---:|:---:|
-| **Ping Service** | `GET /api/books/ping` | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| **Health / Probes** | `GET /actuator/health`, `/actuator/health/**` | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| **Info / Diagnostics** | `/actuator/**` except GET health | :x: (401) | :x: (403) | ADMIN only; MANAGER 403 |
-| **OpenAPI / Swagger** | `GET /api-docs/**`, `/swagger-ui/**` | :x: (401) | :x: (403) | ADMIN only; MANAGER 403 |
-| **List / Search Books** | `GET /api/books/**` | :x: (401) | :white_check_mark: | :white_check_mark: |
-| **Create Book** | `POST /api/books` | :x: (401) | :white_check_mark: (Owner bound to caller) | :white_check_mark: (Can set any `userId`) |
-| **Update Book** | `PUT /api/books` | :x: (401) | :white_check_mark: (Owned books only; no owner transfer) | :white_check_mark: (Any book; can transfer owner) |
-| **Delete Book** | `DELETE /api/books/{id}` | :x: (401) | :white_check_mark: (Owned books only) | :white_check_mark: (Any book) |
-| **List / Search Authors**| `GET /api/authors/**` | :x: (401) | :white_check_mark: | :white_check_mark: |
-| **Create Author** | `POST /api/authors` | :x: (401) | :x: (403) | :white_check_mark: |
-| **Update Author** | `PUT /api/authors` | :x: (401) | :x: (403) | :white_check_mark: |
-| **Delete Author** | `DELETE /api/authors/{id}` | :x: (401) | :x: (403) | :white_check_mark: |
-
----
-
-## REST API Specification
-
-Base URL: `http://localhost:9151`
-
-### Public Endpoints
-
-| Method | Endpoint | Description | Expected Response |
-|---|---|---|---|
-| `GET` | `/api/books/ping` | Liveness / connectivity probe | `200 OK` (`Pong`) |
-| `GET` | `/actuator/health` | Spring Boot Actuator health status | `200 OK` (JSON) |
-
-`/actuator/info`, other diagnostics, `/swagger-ui.html` and `/api-docs` require an ADMIN bearer token. Health details are shown only to authorized administrators.
-
-### Book Endpoints
-
-All endpoints require `Authorization: Bearer <token>`.
-
-| Method | Endpoint | Parameters / Body | Description |
-|---|---|---|---|
-| `GET` | `/api/books` | _None_ | Retrieve all books in the catalog |
-| `GET` | `/api/books/{id}` | `id` (Path UUID) | Fetch a specific book by ID |
-| `GET` | `/api/books/title` | `title` (Query String) | Find books by exact title |
-| `GET` | `/api/books/isbn` | `isbn` (Query String) | Find books by ISBN |
-| `GET` | `/api/books/publisher` | `publisher` (Query String) | Find books by publisher name |
-| `GET` | `/api/books/author` | `authorId` (Query UUID) | Find books written by an author UUID |
-| `GET` | `/api/books/userId` | `userId` (Query UUID) | Find books owned by a user UUID |
-| `GET` | `/api/books/userName` | `userName` (Query String) | Find books owned by username |
-| `POST` | `/api/books` | Request Body: `BookRequest` | Create a new book record |
-| `PUT` | `/api/books` | Request Body: `BookRequest` | Update an existing book record (requires `id` in body) |
-| `DELETE` | `/api/books/{id}` | `id` (Path UUID) | Delete a book (returns deleted `BookDTO`) |
-
-### Author Endpoints
-
-All endpoints require `Authorization: Bearer <token>`. Mutations require `ADMIN` or `MANAGER`.
-
-| Method | Endpoint | Parameters / Body | Description |
-|---|---|---|---|
-| `GET` | `/api/authors` | `pageNumber`, `pageSize`, `paged` | List all authors (optional pagination) |
-| `GET` | `/api/authors/{id}` | `id` (Path UUID) | Fetch author by ID |
-| `GET` | `/api/authors/firstName` | `firstName`, pagination/sorting params | Filter authors by first name |
-| `GET` | `/api/authors/lastName` | `lastName`, pagination/sorting params | Filter authors by last name |
-| `GET` | `/api/authors/name` | `firstName`, `lastName` | Filter authors by exact first and last name |
-| `GET` | `/api/authors/genre` | `genre`, pagination/sorting params | Filter authors by literary genre |
-| `POST` | `/api/authors` | Request Body: `AuthorRequest` | Create author (*Catalog Manager only*) |
-| `PUT` | `/api/authors` | Request Body: `AuthorRequest` | Update author (*Catalog Manager only*) |
-| `DELETE` | `/api/authors/{id}` | `id` (Path UUID) | Delete author (*Catalog Manager only*) |
-
-### Pagination & Sorting Parameters
-
-Author search endpoints support the following optional query parameters:
-
-| Parameter | Type | Default | Constraints | Description |
-|---|---|---|---|---|
-| `paged` | `Boolean` | `false` | `true` or `false` | Toggles pagination mode. When `false`, returns all matches. |
-| `pageNumber`| `Integer` | `0` | $\ge 0$ | Zero-indexed page number. |
-| `pageSize` | `Integer` | `20` | $1 \le \text{size} \le 200$ | Number of records per page. |
-| `sorted` | `Boolean` | `false` | `true` or `false` | Toggles sorting on `firstName` and `lastName`. |
-| `sortOrder` | `String` | `ASC` | `ASC`, `DSC` | Direction of sort (supports legacy `DSC` spelling). |
-
----
-
-## Request & Response Payloads
-
-### `BookRequest` (Inbound Payload)
-
-Used for `POST` and `PUT` operations on `/api/books`:
-
-```json
-{
-  "id": "e4b1b9e2-3490-4eb6-9214-41d6b052d9a3",
-  "title": "Designing Data-Intensive Applications",
-  "description": "The big ideas behind reliable, scalable, and maintainable systems.",
-  "isbn": "978-1449373320",
-  "publisher": "O'Reilly Media",
-  "authorId": "a1b2c3d4-0000-0000-0000-000000000001",
-  "completed": false,
-  "userId": "c0a80101-0000-0000-0000-000000000001",
-  "userName": "johndoe"
-}
-```
-
-- When **creating** (`POST`), `id` is omitted or `null`.
-- When **updating** (`PUT`), `id` specifies the target entity. Fields omitted or `null` retain their existing values (patch semantics).
-- Regular users cannot reassign `userId`.
-
-### `BookDTO` (Outbound Payload)
-
-```json
-{
-  "id": "e4b1b9e2-3490-4eb6-9214-41d6b052d9a3",
-  "created": "2026-10-04T12:00:00",
-  "updated": "2026-10-04T12:00:00",
-  "title": "Designing Data-Intensive Applications",
-  "description": "The big ideas behind reliable, scalable, and maintainable systems.",
-  "isbn": "978-1449373320",
-  "publisher": "O'Reilly Media",
-  "authorId": "a1b2c3d4-0000-0000-0000-000000000001",
-  "completed": false,
-  "userId": "c0a80101-0000-0000-0000-000000000001",
-  "userName": "johndoe"
-}
-```
-
-> [!NOTE]
-> Timestamps in domain entities use UTC `Instant`. In serialized DTOs, they are formatted as UTC `LocalDateTime` strings. Fields with `null` values are omitted via Jackson `@JsonInclude(NON_NULL)`.
-
-### `AuthorRequest` (Inbound Payload)
-
-Used for `POST` and `PUT` operations on `/api/authors`:
-
-```json
-{
-  "id": "a1b2c3d4-0000-0000-0000-000000000001",
-  "firstName": "Martin",
-  "lastName": "Kleppmann",
-  "genre": "Computer Science"
-}
-```
-
-### `AuthorDTO` (Outbound Payload)
-
-```json
-{
-  "id": "a1b2c3d4-0000-0000-0000-000000000001",
-  "created": "2026-10-04T12:00:00",
-  "updated": "2026-10-04T12:00:00",
-  "firstName": "Martin",
-  "lastName": "Kleppmann",
-  "genre": "Computer Science"
-}
-```
-
----
-
-## cURL Examples
-
-Set your JWT access token and host endpoint:
-
-```bash
-export ACCESS_TOKEN="<your-keycloak-access-token>"
-export BOOKS_API="http://localhost:9151"
-```
-
-### 1. Public Ping Check
-
-```bash
-curl -X GET "$BOOKS_API/api/books/ping"
-# Output: Pong
-```
-
-### 2. Create a New Book
-
-```bash
-curl -i -X POST "$BOOKS_API/api/books" \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Cloud Native Patterns",
-    "description": "Designing change-tolerant software",
-    "isbn": "978-1617294297",
-    "publisher": "Manning",
-    "completed": false
-  }'
-```
-
-Expected response (`200 OK` with `Location` header):
-
-```http
-HTTP/1.1 200 OK
-Location: http://localhost:9151/api/books/2c0d512a-0000-0000-0000-000000000001
-Content-Type: application/json
-```
-
-### 3. Retrieve Book by ID
-
-```bash
-curl -X GET "$BOOKS_API/api/books/2c0d512a-0000-0000-0000-000000000001" \
-  -H "Authorization: Bearer $ACCESS_TOKEN"
-```
-
-### 4. Search Books by Title
-
-```bash
-curl -X GET "$BOOKS_API/api/books/title?title=Cloud%20Native%20Patterns" \
-  -H "Authorization: Bearer $ACCESS_TOKEN"
-```
-
-### 5. Update Book (Patch Semantics)
-
-Mark the book as completed:
-
-```bash
-curl -X PUT "$BOOKS_API/api/books" \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "2c0d512a-0000-0000-0000-000000000001",
-    "completed": true
-  }'
-```
-
-### 6. Delete Book
-
-```bash
-curl -X DELETE "$BOOKS_API/api/books/2c0d512a-0000-0000-0000-000000000001" \
-  -H "Authorization: Bearer $ACCESS_TOKEN"
-```
-
-### 7. Search Authors with Pagination & Sorting
-
-```bash
-curl -X GET "$BOOKS_API/api/authors/genre?genre=Science%20Fiction&paged=true&pageNumber=0&pageSize=10&sorted=true&sortOrder=ASC" \
-  -H "Authorization: Bearer $ACCESS_TOKEN"
-```
-
-### 8. Create Author (Requires `ROLE_ADMIN` or `ROLE_MANAGER`)
-
-```bash
-curl -X POST "$BOOKS_API/api/authors" \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "firstName": "Arthur C.",
-    "lastName": "Clarke",
-    "genre": "Science Fiction"
-  }'
-```
-
----
-
-## Error Handling & Problem Details
-
-Errors are intercepted by `GlobalExceptionHandler` and return a structured JSON response body with an array of errors:
-
-```json
-{
-  "errors": [
-    {
-      "guid": "c1f7f022-7776-47b2-b430-80eaae9d8e57",
-      "entityName": "userId",
-      "code": 403,
-      "status": "FORBIDDEN",
-      "message": "Book may only be changed by its owner or a catalog manager",
-      "timestamp": "2026-10-04T15:30:00.123456+05:30",
-      "path": "/api/books"
-    }
-  ]
-}
-```
-
-### Error Fields
-
-| Field | Type | Description |
-|---|---|---|
-| `guid` | `String` (UUID) | Unique identifier generated for the error occurrence (useful for log correlation). |
-| `entityName`| `String` | Field or entity associated with the failure (e.g., `id`, `userId`, `request`, `title`). |
-| `code` | `Integer` | HTTP status code number (e.g., `400`, `403`, `404`, `500`). |
-| `status` | `HttpStatus` | HTTP status enum string (e.g., `BAD_REQUEST`, `FORBIDDEN`, `NOT_FOUND`). |
-| `message` | `String` | Human-readable explanation of the validation or business rule failure. |
-| `timestamp` | `ZonedDateTime`| Precise timestamp when the error occurred. |
-| `path` | `String` | The request URI path that produced the error. |
-
-### Status Code Mapping
-
-- **`400 BAD_REQUEST`**:
-  - `IllegalArgumentException`: Domain validation failures (e.g., blank title, invalid page size $> 200$).
-  - `MethodArgumentNotValidException`: Bean Validation failures (`@Size`, `@NotEmpty`, etc.).
-  - `TypeMismatchException`: Path variable or query param type mismatch (e.g. malformed UUID string).
-  - `HttpMessageNotReadableException`: Unparseable JSON or invalid enum literal (e.g. invalid `SortOrder`).
-- **`401 UNAUTHORIZED`**: Missing, expired, or invalid OAuth2 JWT token.
-- **`403 FORBIDDEN`**:
-  - `CatalogAccessDeniedException` / `AccessDeniedException`: Attempting to edit/delete another user's book, non-manager transferring book ownership, non-manager mutating authors, or JWT subject is not a valid UUID.
-- **`404 NOT_FOUND`**:
-  - `BookNotFoundException`: Target book UUID not found.
-  - `AuthorNotFoundException`: Target author UUID not found.
-- **`500 INTERNAL_SERVER_ERROR`**: Uncaught exceptions.
-
----
-
-## Database Architecture & Migrations
-
-### PostgreSQL Schema
-
-The schema is defined in Flyway migration script `V1__ddl_booksdb_createTables.sql`:
-
-```sql
-create table tbl_authors (
-    id uuid not null primary key,
-    first_name varchar(255),
-    last_name varchar(255),
-    genre varchar(255),
-    created timestamptz,
-    updated timestamptz
-);
-
-create table tbl_books (
-    id uuid not null primary key,
-    title varchar(100) unique,
-    description varchar(100),
-    isbn varchar(255),
-    publisher varchar(255),
-    author_id uuid,
-    user_id uuid,
-    user_name varchar(20),
-    completed boolean default false,
-    created timestamptz,
-    updated timestamptz
-);
-
-create index idx_tbl_books_author_id on tbl_books(author_id);
-create index idx_tbl_books_user_id on tbl_books(user_id);
-create index idx_tbl_books_isbn on tbl_books(isbn);
-```
-
-### Dual-User Least Privilege Model
-
-The application enforces database least privilege by separating DDL migration permissions from DML application runtime:
-
-```mermaid
-flowchart TD
-    subgraph PostgreSQL Database: booksdb
-        Schema["public schema"]
-        Tables["tbl_books\ntbl_authors"]
-    end
-
-    subgraph Database Roles
-        AdminUser["bookadmin\n(Flyway Migration User)"]
-        RuntimeUser["theuser\n(Application Runtime User)"]
-    end
-
-    AdminUser -->|"OWNER / DDL (CREATE, ALTER, DROP)"| Schema
-    AdminUser -->|"DEFAULT PRIVILEGES"| Tables
-    RuntimeUser -->|"DML Only (SELECT, INSERT, UPDATE, DELETE)"| Tables
-```
-
-1. **Migration User (`bookadmin`)**:
-   - Owns the `booksdb` database and `public` schema.
-   - Executes Flyway migrations on startup.
-   - Configured via `spring.flyway.user` / `spring.flyway.password`.
-2. **Runtime User (`theuser`)**:
-   - Granted connection and table-level `SELECT, INSERT, UPDATE, DELETE` only.
-   - Has **no** DDL or schema alteration privileges.
-   - Configured via `spring.datasource.username` / `spring.datasource.password`.
-
-The database initialization script is located at [`src/main/scripts/ddl_init_bookdb_users.sql`](src/main/scripts/ddl_init_bookdb_users.sql) and is also mounted automatically by Docker Compose.
-
-### Flyway Migrations
-
-- Migrations location: `classpath:db/migration`.
-- Migration properties:
-  - `spring.flyway.baseline-on-migrate: true`
-  - `spring.flyway.validate-on-migrate: true`
-  - `spring.jpa.hibernate.ddl-auto: validate` (Hibernate validates JPA entities against the schema without modifying tables).
-
-### Sample Seed Data
-
-The service includes pre-configured sample datasets:
-- [`src/main/resources/data/authors.json`](src/main/resources/data/authors.json): Rich sample of authors across genres.
-- [`src/main/resources/data/books.json`](src/main/resources/data/books.json): Curated sample of books.
-
-**How Seeding Works**:
-- Data initialization is **opt-in** and requires the `seed` Spring profile (`SPRING_PROFILES_ACTIVE=dev,seed`).
-- `AuthorsDataInitializer` (Order 1) loads authors into `tbl_authors` only if the table is currently empty.
-- `BooksDataInitializer` (Order 2) loads books into `tbl_books`, automatically linking each book to one of the loaded authors at random, only if `tbl_books` is currently empty.
-- Populated tables are never overwritten or duplicated.
-
----
-
-## Configuration & Profiles
-
-### Spring Profiles
-
-| Profile | Purpose | Behavior |
-|---|---|---|
-| `dev` | Default development environment | Imports Vault secret paths `/secret/data/db/booksdb/dev` and `/secret/data/keycloak/dev`. |
-| `qa` | QA testing environment | Imports Vault secret paths `/secret/data/db/booksdb/qa` and `/secret/data/keycloak/qa`. |
-| `seed` | Test data initialization | Executes `AuthorsDataInitializer` and `BooksDataInitializer` if tables are empty. |
-| `clean` | Database reset | Activates `DbClean`, invoking `flyway.clean()` followed by `flyway.migrate()` on startup. |
-
-> [!WARNING]
-> Keep the Vault profile selector variable `SPRING_ACTIVE_PROFILE=dev` separate from multi-profile active flags `SPRING_PROFILES_ACTIVE=dev,seed`. If `SPRING_ACTIVE_PROFILE` contains a comma, Vault secret URI paths will become invalid.
-
-### Environment Variables Reference
-
-| Variable | Default Value | Description |
-|---|---|---|
-| `SERVER_PORT` | `9151` | HTTP port on which Books Service listens. |
-| `SPRING_APP_NAME` | `books-service` | Spring application name for logging and Eureka registration. |
-| `SPRING_ACTIVE_PROFILE` | `dev` | Active environment profile name (for Vault path interpolation). |
-| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/booksdb` | JDBC connection string. |
-| `SPRING_DATASOURCE_USERNAME`| `theuser` (or Vault `user`) | Application runtime DB username. |
-| `SPRING_DATASOURCE_PASSWORD`| `theuser` (or Vault `password`)| Application runtime DB password. |
-| `SPRING_FLYWAY_USER` | `bookadmin` (or Vault `flw-user`)| Flyway DDL migration username. |
-| `SPRING_FLYWAY_PASSWORD` | `bookadmin` (or Vault `flw-password`)| Flyway DDL migration password. |
-| `KEYCLOAK_ISSUER_URI` | `http://localhost:8080/realms/company-platform` | Keycloak realm issuer URI for JWT validation. |
-| `VAULT_HOST` | `localhost` | HashiCorp Vault hostname. |
-| `VAULT_PORT` | `8200` | HashiCorp Vault port. |
-| `VAULT_TOKEN` | `srikanth` | HashiCorp Vault access token. |
-| `SPRING_CLOUD_VAULT_ENABLED` | `true` | Set to `false` to disable HashiCorp Vault configuration import. |
-| `SPRING_CLOUD_CONFIG_ENABLED`| `true` | Set to `false` to disable Spring Cloud Config Server import. |
-| `EUREKA_CLIENT_ENABLED` | `true` | Set to `false` to disable Eureka service registration. |
-| `SPRING_DOCKER_COMPOSE_ENABLED`| `true` | Set to `false` when running tests or managing Compose manually. |
-| `ROOT_LOG_LEVEL` | `info` | Root logging level (`debug`, `info`, `warn`, `error`). |
-| `BOOKS_DB_HOST_PORT` | `25432` | Host port mapped to PostgreSQL in `compose.yml`. |
-| `BOOKS_KEYCLOAK_HOST_PORT` | `28080` | Host port mapped to Keycloak in `compose.yml`. |
-
----
-
-## Build, Toolchain & Testing
-
-### Java 27 & Gradle Launch Setup
-
-The project is built on **Java 27**, **Spring Boot 4.1.1**, and **Gradle 9.8.0**, using this repository's independent checksum-verified Groovy wrapper:
-
-```groovy
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(27)
-    }
-}
-```
-
-> [!IMPORTANT]
-> **Java 27 Launcher And Toolchain**:
-> Set `JAVA_HOME` to Java 27. The Gradle wrapper, daemon, compilation and tests all use Java 27:
->
-> ```bash
-> # Verify installed JVMs on macOS:
-> /usr/libexec/java_home -V
->
-> # Launch Gradle directly with JDK 27:
-> JAVA_HOME=$(/usr/libexec/java_home -v 27) ./gradlew test
-> ```
-
-### Running Unit & MVC Tests
-
-Unit and MockMvc tests run without Docker or external dependencies:
-
-```bash
-JAVA_HOME=$(/usr/libexec/java_home -v 27) ./gradlew test
-```
-
-Included unit test suites:
-- `BookCatalogServiceTest`: Ownership rules, anti-spoofing validation, ownership transfer guards, and patch revisions.
-- `AuthorCatalogServiceTest`: Manager role enforcement for author mutations and query validation.
-- `SecurityConfigTest`: Verification of Keycloak realm role and scope mapping into Spring Security authorities.
-- `BookControllerTest`: MockMvc slice testing verifying security filters, parameter binding, and request validation.
-
-### Running Integration Tests (Testcontainers)
-
-Integration tests validate PostgreSQL Flyway migrations, JPA entity mappings, and `theuser`/`bookadmin` least-privilege permissions against an isolated PostgreSQL 18 container managed by Testcontainers. Requires Docker daemon to be running:
-
-```bash
-JAVA_HOME=$(/usr/libexec/java_home -v 27) ./gradlew integrationTest
-```
-
-### Building Application Artifacts
-
-To compile and package the executable Spring Boot layered JAR:
-
-```bash
-JAVA_HOME=$(/usr/libexec/java_home -v 27) ./gradlew clean bootJar
-```
-
-The output JAR is generated at `build/libs/books-service-1.0.jar`.
-
----
-
-## Running Locally
-
-### Option A: Standalone JVM with Local DB & Keycloak
-
-When running the application directly on your workstation while pointing to local infrastructure services:
-
-```bash
-# 1. Start local PostgreSQL and Keycloak from Compose
-docker compose up -d postgres keycloak
-
-# 2. Export environment variables pointing to local ports
-export SERVER_PORT=9151
-export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:25432/booksdb
-export SPRING_DATASOURCE_USERNAME=theuser
-export SPRING_DATASOURCE_PASSWORD=theuser
-export SPRING_FLYWAY_USER=bookadmin
-export SPRING_FLYWAY_PASSWORD=bookadmin
-export KEYCLOAK_ISSUER_URI=http://localhost:28080/realms/company-platform
-
-# 3. Disable external cloud discovery and config if not running
-export SPRING_CLOUD_VAULT_ENABLED=false
-export SPRING_CLOUD_CONFIG_ENABLED=false
-export EUREKA_CLIENT_ENABLED=false
-export SPRING_DOCKER_COMPOSE_ENABLED=false
-
-# 4. Optional: Enable seed profile to load sample authors and books
-export SPRING_PROFILES_ACTIVE=dev,seed
-export SPRING_ACTIVE_PROFILE=dev
-
-# 5. Launch application
-JAVA_HOME=$(/usr/libexec/java_home -v 27) ./gradlew bootRun
-```
-
-### Option B: Complete Stack via Docker Compose
-
-[`compose.yml`](compose.yml) spins up the entire isolated stack:
-- **`postgres`**: PostgreSQL 18 exposed on host port `25432` (`BOOKS_DB_HOST_PORT`).
-- **`keycloak`**: Keycloak latest running in `start-dev` mode, exposed on host port `28080` (`BOOKS_KEYCLOAK_HOST_PORT`).
-- **`books-service`**: Books Service container built from local `Dockerfile`, exposed on host port `9151`.
-
-```bash
-# 1. Build the application bootJar first
-JAVA_HOME=$(/usr/libexec/java_home -v 27) ./gradlew bootJar
-
-# 2. Validate docker compose configuration
-docker compose config --quiet
-
-# 3. Build and launch all services in detached mode
-docker compose up -d --build
-
-# 4. Inspect container logs
-docker compose logs -f books-service
-```
-
-To stop and remove containers and volumes:
-
-```bash
-docker compose down -v
-```
-
----
-
-## Docker & Container Deployment
-
-The [Dockerfile](Dockerfile) runs the executable `build/libs/books-service-1.0.jar` directly on Temurin 27 as non-root `appuser:appgroup`. Curl is installed for readiness checks on port 9151. The restricted Docker context includes only the JAR, not source, local configuration or credentials. Container-aware heap sizing uses `MaxRAMPercentage=75`; set memory limits and leave headroom for non-heap memory.
-
-```bash
-docker build -t books-service:latest .
-ruby bin/verify-image.rb
-```
-
-The repeatable smoke requires Docker Desktop (`host.docker.internal`) and Ruby with WEBrick/OpenSSL. It creates an isolated network and temporary PostgreSQL 18 with memory-backed data, using `root/root`, `bookadmin/bookadmin` and `theuser/theuser`. Temporary RSA keys and OIDC/JWKS metadata drive actual JWT decoding. Config/Vault imports and Eureka are disabled only for this smoke. Existing databases, volumes and Keycloak realms are untouched; temporary containers and the network are cleaned up.
-
-The image is tested with a read-only root filesystem, writable `/tmp`, dropped capabilities, `no-new-privileges` and a 512 MiB limit. Checks cover Flyway/table ownership, runtime-role sessions, signed JWT rejection for wrong signature/issuer/expiry, public ping/probes, ADMIN-only JSON/YAML/Swagger/diagnostics, a persisted USER book with JWT-derived ownership, and denied non-owner deletion. Actual JSON and YAML contracts declare HTTP `bearerAuth` with JWT format and global security requirements. Public ping/probe GET operations explicitly override those requirements; catalog GET retains bearer security. Infrastructure configuration tests cover exact public paths, unchanged non-GET/private operations and absent path documents.
-
-### Probe Semantics
-
-Standalone and shared Compose probe `/actuator/health/readiness`. Readiness includes `readinessState,db` because data APIs require PostgreSQL. Liveness tracks application state only. A database outage returns readiness 503 while liveness stays 200; a shared database outage can make all instances unready, so callers/ingress must handle that condition. Anonymous health responses omit details; ADMIN can inspect components.
-
-Pool acquisition defaults to 3000 ms (`SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT`), with 1000 ms connection validation, to bound ordinary unavailable-database checks within the 5-second probe timeout. Hung network queries still require driver/network timeout policy. Readiness does not establish Config/Vault/Keycloak/Eureka availability.
-
-This increment is not normal company-platform Keycloak/audience validation, shared configuration/discovery, DB recovery, production load, concurrent-write safety or full-platform acceptance.
-
----
-
-The service exposes the following observability endpoints; production telemetry and acceptance remain pending:
-
-| Endpoint | Access | Purpose |
-|---|---|---|
-| `GET /actuator/health` | Public | Comprehensive health probe (PostgreSQL, disk space, liveness). |
-| `GET /actuator/info` | ADMIN | Exposes build info, git commit hashes, Java version, and OS. |
-| `GET /actuator/metrics` | ADMIN | Application metrics (JVM memory, garbage collection, HTTP requests). |
-| `GET /actuator/prometheus` | ADMIN | Prometheus-formatted metrics scrape endpoint when its exporter is present. |
-| `GET /actuator/loggers` | ADMIN | Inspect logging levels; changes use the supported write operation. |
-| `GET /actuator/threaddump` | ADMIN | Snapshot of JVM platform and virtual threads. |
-
-### Virtual Threads
-
-Enabled by default in `application.yaml`:
-
-```yaml
-spring:
-  threads:
-    virtual:
-      enabled: true
-```
-
-All incoming web requests and database queries are dispatched on lightweight Java virtual threads, delivering high concurrency throughput with minimal memory overhead.
-
----
-
-## Roadmap & Sibling Dependencies
-
-The following capabilities are tracked as part of the wider platform roadmap:
-
-1. **API Gateway Routes**: Gateway routing and rate-limiting configurations for `/api/books/**` and `/api/authors/**` need to be provisioned on the shared Edge Gateway.
-2. **Fine-Grained Auth Service Policy Enforcement**: Integration with Auth Service's policy engine to enforce fine-grained attribute-based access control (ABAC).
-3. **Domain Event Publishing**: Publishing asynchronous domain events (e.g. `BookCreatedEvent`, `BookDeletedEvent`) to Kafka/RabbitMQ for cache invalidation and search index synchronization.
-4. **Optimistic Concurrency**: Adding versioning (`@Version`) to entities to prevent lost updates during concurrent edits.
-5. **Platform Cross-References**:
-   - Platform Orchestration: [`../micro-services/README.md`](../micro-services/README.md)
-   - Configuration Management: [`../service-configs/README.md`](../service-configs/README.md)
-   - IAM Implementation Checkpoint: [`../micro-services/IAM_IMPLEMENTATION_CHECKPOINT.md`](../micro-services/IAM_IMPLEMENTATION_CHECKPOINT.md)
-
----
-
-## Maintainer Quick Reference
-
-This README is intentionally domain-heavy. The short version for daily operation is:
-
-| Concern | Current value |
+# books-service
+
+The catalog context of the platform: **books and their authors**. It is the first business service that runs on the identity platform, and it relies on that platform for everything about people:
+
+- **Users** are the ones [`user-service`](../user-service/README.md) manages. This service stores no user data; a book only records the platform user ID of its owner.
+- **Login** happens at [`auth-service`](../auth-service/README.md). Nothing here is usable without a platform access token.
+- **Roles** are created and assigned in `auth-service`. This service defines none and checks only the permissions that arrive in the token.
+
+## Contents
+
+- [Responsibilities](#responsibilities)
+- [Who may do what](#who-may-do-what)
+- [API](#api)
+- [Errors](#errors)
+- [Rules the service enforces](#rules-the-service-enforces)
+- [Architecture](#architecture)
+- [Data](#data)
+- [Seed data](#seed-data)
+- [Configuration](#configuration)
+- [Dev users and passwords](#dev-users-and-passwords)
+- [Run](#run)
+- [Test](#test)
+- [Build and image](#build-and-image)
+
+## Responsibilities
+
+| Area | What it does |
 | --- | --- |
-| Application name | `books-service` |
-| HTTP port | `9151` |
-| Database | PostgreSQL `booksdb` |
-| Runtime DB role | `theuser` |
-| Flyway role | `bookadmin` |
-| Main API roots | `/api/books`, `/api/authors` |
-| Public endpoint | `GET /api/books/ping` |
-| API docs | `/api-docs`, `/swagger-ui.html` |
-| Config imports | Vault DB/keycloak paths and optional Config Server |
-| Discovery | Eureka client configured through `EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE` |
+| Books | Add, read, search, change, remove; every book has an author and may have an owner |
+| Authors | Add, read, search, change, remove |
+| Ownership | A book belongs to the user who added it; a catalog manager can give it to another user |
+| Starter catalog | 47 authors and 44 books loaded at startup in development |
 
-Common commands from this repository root:
+## Who may do what
 
-```bash
-bash ./gradlew test
-bash ./gradlew integrationTest
-bash ./gradlew clean test integrationTest bootJar
-docker build -t books-service:latest .
-docker compose config --quiet
-docker compose up -d --build
-```
+Being logged in is not enough: a caller needs a catalog role. A user with only the platform's default `USER` role gets `403`.
 
-Local host run against the service-local dependency ports:
+| Role (managed in auth-service) | Permissions in the token | May |
+| --- | --- | --- |
+| `CATALOG_READER` | `books:read` | read books and authors |
+| `CATALOG_EDITOR` | `books:read`, `books:write` | also add books, and change or remove their own |
+| `CATALOG_MANAGER` | `books:read`, `books:write`, `books:manage`, `authors:manage` | also change or remove any book, transfer ownership, manage authors |
+| `PLATFORM_ADMIN` | all four | everything |
+
+Give someone a role through the platform, never here:
 
 ```bash
-export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:25432/booksdb
-export SPRING_DATASOURCE_USERNAME=theuser
-export SPRING_DATASOURCE_PASSWORD='<runtime password from local Vault/config>'
-export SPRING_FLYWAY_USER=bookadmin
-export SPRING_FLYWAY_PASSWORD='<migration password from local Vault/config>'
-export KEYCLOAK_ISSUER_URI=http://localhost:28080/realms/company-platform
-export SPRING_CLOUD_VAULT_ENABLED=false
-export SPRING_CLOUD_CONFIG_ENABLED=false
-bash ./gradlew bootRun
+curl -s -X POST localhost:9211/api/v1/users/$USER_ID/roles -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H 'Content-Type: application/json' -d '{"roles":[{"name":"CATALOG_EDITOR"}]}'
 ```
 
-Representative smoke checks:
+The user's next token (after a refresh or a new login) carries the permissions. The roles, the permissions and the `books-service` client itself are created through the platform APIs by the onboarding job in [`micro-services`](../micro-services/README.md) (`onboarding/books-service.json`).
+
+## API
+
+Base paths `/api/v1/books` and `/api/v1/authors`. Reach them through the gateway (`http://localhost:9211`); the service itself listens on 9151. OpenAPI at `/v3/api-docs`, Swagger UI at `/swagger-ui.html` (off in `prod`).
+
+Every call needs `Authorization: Bearer <access token>` from `POST /api/v1/auth/login`.
+
+### Books
+
+| Method and path | Purpose | Needs |
+| --- | --- | --- |
+| `GET /api/v1/books` | Search. Filters: `title`, `publisher` (contain, any case), `isbn`, `authorId`, `ownerId`, `owner=me`. Paging: `page`, `size`, `sort`. | `books:read` |
+| `GET /api/v1/books/{id}` | Read a book | `books:read` |
+| `POST /api/v1/books` | Add a book. `201` with `Location`. It belongs to the caller; a manager may name another `ownerId`. | `books:write` |
+| `PUT /api/v1/books/{id}` | Replace its details | `books:write`, and owner or `books:manage` |
+| `PUT /api/v1/books/{id}/owner` | Give it to another active platform user: `{"ownerId": "..."}` | `books:manage` |
+| `DELETE /api/v1/books/{id}` | Remove it. `204`. | `books:write`, and owner or `books:manage` |
+
+### Authors
+
+| Method and path | Purpose | Needs |
+| --- | --- | --- |
+| `GET /api/v1/authors` | Search. Filters: `name` (first or last, contains), `genre`. Paging: `page`, `size`, `sort`. | `books:read` |
+| `GET /api/v1/authors/{id}` | Read an author | `books:read` |
+| `POST /api/v1/authors` | Add an author. `201` with `Location`. | `authors:manage` |
+| `PUT /api/v1/authors/{id}` | Replace name and genre | `authors:manage` |
+| `DELETE /api/v1/authors/{id}` | Remove an author who has no books. `204`. | `authors:manage` |
+
+### Bodies
+
+```json
+// POST or PUT /api/v1/books
+{"title": "Dune", "description": "A desert planet.", "isbn": "978-0-441-17271-9", "publisher": "Ace",
+ "authorId": "<author id>", "completed": false}
+
+// response
+{"id": "...", "title": "Dune", "description": "A desert planet.", "isbn": "9780441172719", "publisher": "Ace",
+ "author": {"id": "...", "firstName": "Frank", "lastName": "Herbert"}, "ownerId": "<platform user id or null>",
+ "completed": false, "createdAt": "...", "updatedAt": "..."}
+
+// POST or PUT /api/v1/authors
+{"firstName": "Frank", "lastName": "Herbert", "genre": "Science Fiction"}
+```
+
+Lists return `items`, `total`, `page`, `size`. `page` starts at 0; `size` is 1 to 100 (default 20). `sort` is `field` or `field,asc|desc`: books by `title` (default), `publisher`, `createdAt`; authors by `lastName` (default), `firstName`, `genre`, `createdAt`.
+
+### Example
 
 ```bash
-curl http://localhost:9151/actuator/health
-curl http://localhost:9151/api/books/ping
-curl -H "Authorization: Bearer $ACCESS_TOKEN" http://localhost:9151/api/books?page=0\&size=10
-curl -H "Authorization: Bearer $ACCESS_TOKEN" http://localhost:9151/api/authors?page=0\&size=10
+. ../micro-services/.env
+TOKEN=$(curl -s -X POST localhost:9211/api/v1/auth/login -H 'Content-Type: application/json' \
+  -d "{\"username\":\"platform-admin\",\"password\":\"$PLATFORM_ADMIN_PASSWORD\"}" | jq -r .accessToken)
+
+curl -s "localhost:9211/api/v1/books?size=3&sort=title" -H "Authorization: Bearer $TOKEN" | jq
+curl -s "localhost:9211/api/v1/authors?genre=mystery" -H "Authorization: Bearer $TOKEN" | jq '.items[].lastName'
 ```
 
-When editing the service, keep framework dependencies out of `books.domain`, keep schema changes in Flyway, and update the gateway/platform docs when externally exposed routes change.
+## Errors
 
+Every error is an RFC 9457 problem (`application/problem+json`) with a stable `type` (`https://platform.local/problems/<code>`) and a matching `code`. Clients should switch on `code`, never on the text.
 
-## JWT Audience Contract
+| `code` | Status | When |
+| --- | --- | --- |
+| `invalid-value` | 400 | Validation failed; `errors` lists `field` and `message`. Includes an ISBN with a wrong check digit and an `authorId` that does not exist. |
+| `unauthorized` | 401 | No token, or one that cannot be verified or is not meant for this service |
+| `forbidden` | 403 | The token lacks the permission |
+| `operation-not-permitted` | 403 | A catalog rule refused it, for example changing someone else's book |
+| `book-not-found`, `author-not-found` | 404 | |
+| `duplicate-book` | 409 | Another book already has the ISBN |
+| `author-in-use` | 409 | The author still has books |
+| `owner-not-eligible` | 422 | The user a book is to be given to does not exist or is not active |
+| `user-directory-unavailable` | 503 | user-service or auth-service could not be asked about a user |
+| `internal-error` | 500 | Anything unexpected |
 
-Spring Boot's managed JWT decoder requires the configured issuer and the audience `company-platform-api`. Override the audience with `KEYCLOAK_API_AUDIENCE` when running locally against a different API client. A correctly signed token with a missing or different `aud` claim returns HTTP 401; realm roles do not bypass audience validation.
+## Rules the service enforces
 
-`ruby bin/verify-image.rb` checks the actual packaged application's RSA/JWKS decoder with accepted, missing and incorrect audiences, while retaining catalog, ownership, documentation and probe checks. These checks use a controlled local issuer, not genuine Keycloak realm acceptance.
+Domain rules, tested without Spring:
 
-## Repository CI
+- **A book belongs to whoever adds it.** Only a catalog manager may add a book for someone else.
+- **Only the owner or a catalog manager changes or removes a book.** Another editor cannot.
+- **Catalog-owned books** (no owner, such as the starter catalog) are changed only by a catalog manager.
+- **Only a catalog manager transfers a book**, even the owner cannot, and only to a user that user-service reports as active.
+- **An ISBN is an ISBN-13 with a correct check digit**, and no two books share one. Hyphens and spaces are accepted and dropped.
+- **A book names an existing author**, and an author who still has books cannot be removed.
 
-[Build workflow](.github/workflows/build.yml) runs independently on pushes, pull requests and manual dispatch with Temurin Java 27 on Ubuntu 24.04. It verifies this repository's wrapper JAR and Gradle distribution checksum, runs `check integrationTest bootJar` with fresh tasks and Gradle deprecations treated as failures, builds the service image and retains test reports for seven days. Actions are pinned to verified commit SHAs; permissions are read-only and checkout credentials are not persisted.
+Things to know:
 
-PostgreSQL integration tests use Docker/Testcontainers; no production database or platform credentials are required. The workflow definition passes local actionlint/structural checks, but has not run on GitHub while these changes remain uncommitted/unpushed. Image building in CI does not replace the separate runtime/probe smoke evidence recorded in the checkpoint.
+- Ordinary requests need no call to another service: identity and permissions come from the token. Only giving a book to another user asks user-service.
+- A revoked role or a logout takes effect here when the access token expires or is refreshed (about five minutes in dev).
+- When a user is deleted in user-service their books keep the old owner ID; a catalog manager can reassign or remove them.
+
+## Architecture
+
+Clean architecture; dependencies point inward and ArchUnit fails the build if they do not.
+
+```
+com.books
+├── domain            Pure Java. No Spring, JPA or HTTP.
+│   ├── model         Book, Author, BookDetails, BookId, AuthorId, OwnerId, Title, Isbn, Publisher,
+│   │                 PersonName, Genre, CatalogActor, BookSearch, AuthorSearch, Paging, PageResult
+│   ├── port          BookRepository, AuthorRepository, UserDirectoryPort
+│   └── exception     One type per error code
+├── application       One class per use case: CreateBook, UpdateBook, DeleteBook, TransferBook, GetBook,
+│                     SearchBooks, CreateAuthor, UpdateAuthor, DeleteAuthor, GetAuthor, SearchAuthors,
+│                     SeedCatalog. Depends only on domain.
+├── infrastructure
+│   ├── persistence   JPA entities and repositories
+│   ├── platform      The only code that calls user-service and auth-service
+│   ├── seed          Reads the seed files and runs SeedCatalog at startup
+│   └── config        Wires the use cases as beans
+└── interfaces
+    ├── rest          Controllers, request and response models, problem-detail error handling
+    └── security      Filter chain, permission expressions, the caller as the domain sees them
+```
+
+- The domain's view of the caller, `CatalogActor`, is built from the validated token: the user ID from `sub`, and whether they manage every book from the `books:manage` permission.
+- `UserDirectoryPort` is the domain's only knowledge of users: "what is this user's standing?". Its adapter obtains a client-credentials token from auth-service (`POST /api/v1/auth/service-token`), calls `GET /api/v1/users/{id}` on user-service through the registry, caches the token until shortly before it expires, and gets a new one once if it is refused.
+- Tokens are validated with the shared `platform-security-starter` from `micro-services`: signature against the JWKS, RS256 only, exact issuer, `books-service` in the audience, expiry with clock skew, `typ` `Bearer`.
+
+## Data
+
+Database `booksdb` in the platform's Postgres. Flyway owns the schema (`src/main/resources/db/migration`); Hibernate only validates it.
+
+| Table | Columns |
+| --- | --- |
+| `author` | `id`, `first_name`, `last_name` (optional), `genre`, `created_at`, `updated_at`, `version` |
+| `book` | `id`, `title`, `description` (optional), `isbn` (unique), `publisher`, `author_id` (foreign key), `owner_id` (platform user ID, or null), `completed`, `created_at`, `updated_at`, `version` |
+
+Two database accounts, as before:
+
+| Account | Role | Used for |
+| --- | --- | --- |
+| `booksadmin` | owns the schema | Flyway migrations at startup |
+| `theuser` | reads and writes rows; cannot create, alter or drop tables | everything else |
+
+The database and both accounts are created by the platform's database job with credentials read from Vault.
+
+## Seed data
+
+`src/main/resources/data/authors.json` (47 authors) and `books.json` (44 books), shaped like the model:
+
+```json
+{"id": "9d26b580-...", "title": "The Enigma of Elysium", "description": "A mystery title by Evelyn Wren, published by Mystic Press.",
+ "isbn": "9781234567897", "publisher": "Mystic Press", "authorId": "a1fcc431-..."}
+```
+
+- Every entry has a fixed ID, every book names its author, and every ISBN is a valid ISBN-13.
+- Entries go through the same domain objects as API requests, so a seed file that breaks a rule stops the service at startup instead of loading bad data.
+- Loading is safe to repeat: an entry whose ID is already stored is left alone, so later edits survive a restart.
+- Seeded books have no owner; only a catalog manager can change them.
+- It runs when `books.seed.enabled` is `true`: on in `dev`, off in `qa` and `prod` (set in `service-configs`).
+
+## Configuration
+
+Split by environment ([ADR 0014](../micro-services/docs/adr/0014-environment-profiles.md)):
+
+| File | Holds |
+| --- | --- |
+| `application.yml` | What is common: name, port, JPA settings, graceful shutdown, client ID, audience |
+| `application-dev.yml` | Config Server and Vault imports, optional, with localhost defaults |
+| `application-qa.yml`, `application-prod.yml` | The same imports, required, with no defaults |
+
+More settings come from the Config Server (`service-configs/application*.yml` and `books-service*.yml`) and secrets from Vault.
+
+| Variable | Default in `dev` | Meaning |
+| --- | --- | --- |
+| `SPRING_PROFILES_ACTIVE` | `dev` | `dev`, `qa` or `prod` |
+| `SERVER_PORT` | `9151` | HTTP port |
+| `CONFIG_SERVER_URL` | `http://localhost:9311` | Config Server |
+| `VAULT_URI`, `VAULT_TOKEN` | `http://localhost:8200`, none | Vault and this service's token |
+| `DATABASE_URL` | `jdbc:postgresql://localhost:5432/booksdb` | Its database |
+| `KEYCLOAK_URL` | `http://localhost:8080` | Where it fetches signing keys |
+| `KEYCLOAK_PUBLIC_URL` | `http://localhost:8080` | The issuer in tokens; compared exactly |
+| `EUREKA_URL` | `http://localhost:9111/eureka/` | Registry |
+
+Other settings: `books.seed.enabled`; `platform.directory.user-service-url` and `auth-service-url` (service names resolved through the registry by default), `platform.directory.load-balanced`, `connect-timeout`, `read-timeout`.
+
+No credential is in any file of this repository. From Vault:
+
+| Vault path | Keys | Written by |
+| --- | --- | --- |
+| `secret/books-service` | `spring.datasource.username`, `spring.datasource.password` (runtime account), `spring.flyway.user`, `spring.flyway.password` (schema admin) | the platform's Vault seeding job |
+| `secret/clients/books-service` | `client-secret` (for its own service token) | auth-service, when the client is registered or its secret renewed |
+
+## Dev users and passwords
+
+For the development environment only.
+
+| Account | User | Password | Where it is kept |
+| --- | --- | --- | --- |
+| `booksdb` schema admin | `booksadmin` | `booksadmin` | Vault `secret/books-service` (`spring.flyway.*`) |
+| `booksdb` runtime | `theuser` | `theuser` | Vault `secret/books-service` (`spring.datasource.*`) |
+| Vault dev root token | | `srikanth` | `micro-services/.env.dev.example` |
+| Platform administrator (holds every catalog permission) | `platform-admin` | generated; `PLATFORM_ADMIN_PASSWORD` in `micro-services/.env` | Vault `secret/keycloak` |
+| This service's Vault token | | generated; `BOOKS_SERVICE_VAULT_TOKEN` in `micro-services/.env` | |
+| This service's client secret | `books-service` | generated by auth-service | Vault `secret/clients/books-service` |
+
+There are no application users of this service's own: sign in with a platform user. The full table for the platform is in the [`micro-services` README](../micro-services/README.md#dev-users-and-passwords).
+
+```bash
+docker compose -f ../micro-services/docker-compose.yml exec -e PGPASSWORD=theuser postgres \
+  psql -h localhost -U theuser -d booksdb -c 'select count(*) from book'
+```
+
+## Run
+
+This repository must sit next to [`micro-services`](../micro-services/README.md), which holds the version catalog and the shared starter.
+
+**With the whole platform** (the usual way):
+
+```bash
+cd ../micro-services && make up
+```
+
+books-service starts last: after the gateway is up and the onboarding job has registered it with the platform.
+
+**From source, against the running platform:**
+
+```bash
+cd ../micro-services && scripts/run-from-source.sh books-service
+```
+
+**Restart just this service** after a change: `cd ../micro-services && scripts/restart.sh --build books-service`.
+
+The service shuts down gracefully: on stop it finishes requests in flight (up to 30 seconds) and deregisters from Eureka.
+
+## Test
+
+```bash
+./gradlew build
+```
+
+Needs Docker for Testcontainers. 92 tests; none are skipped.
+
+| Kind | Tests | Against |
+| --- | --- | --- |
+| Domain | 28 | Plain Java: value objects, ownership rules |
+| Use cases | 14 | In-memory ports, including the seed loader |
+| Architecture (ArchUnit) | 7 rules | The compiled classes |
+| Repositories | 9 | Postgres 18, schema from Flyway: constraints, search, paging |
+| User lookup adapter | 10 | A stand-in for auth-service and user-service over HTTP |
+| Controllers (`@WebMvcTest`) | 18 | Mocked use cases: validation, error mapping, authorization |
+| Whole service | 6 | Postgres, the real seed files, tokens verified against a JWKS endpoint |
+
+The build fails if line coverage of `domain` and `application` drops below 80% (currently 99%). Reports: `build/reports/tests/test/index.html` and `build/reports/jacoco/test/html/index.html`.
+
+The end-to-end tests are in `micro-services` (`BooksE2ETest`, run with `make test-e2e`): users are created through user-service, roles assigned through auth-service, and the catalog is used through the gateway.
+
+## Build and image
+
+- Java 27, Gradle 9.8.0 (wrapper), Spring Boot 4.1.1. Versions come from `../micro-services/gradle/libs.versions.toml`.
+- `Dockerfile` is multi-stage: build on JDK 27, run on a JRE 27 Alpine image as a non-root user, with a health check on `/actuator/health/readiness`. It needs the platform root as a named build context, which `micro-services/docker-compose.yml` supplies:
+
+```bash
+docker build --build-context platform=../micro-services -t books-service .
+```
+
+- CI (`.github/workflows/build.yml`) checks out `micro-services` next to this repository, runs `./gradlew build` and builds the image.
+- `bin/verify-image.rb` is a smoke test written for the previous implementation (its own Keycloak realm, `/api/books/ping`). It does not match this service any more and is not run by CI; the checks it made are covered by the tests above and by the platform's end-to-end suite.
