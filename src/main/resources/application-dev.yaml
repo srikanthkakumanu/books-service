@@ -1,6 +1,0 @@
-spring:
-  config:
-    import:
-      - optional:vault://secret/data/db/booksdb/dev
-      - optional:vault://secret/data/keycloak/dev
-      - optional:configserver:${CONFIG_SERVER_URL:http://cloud-config-service:9311/config}

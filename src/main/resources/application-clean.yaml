@@ -1,5 +1,0 @@
-# By default, it should be true. It can be false only for local DEV environment
-#  and not for STAGING/QA/PROD.
-spring:
-  flyway:
-    clean-disabled: false
