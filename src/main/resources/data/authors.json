@@ -1,238 +1,285 @@
 {
   "authors": [
     {
-      "first_name": "Evelyn",
-      "last_name": "Wren",
+      "id": "a1fcc431-e7af-56c5-aa67-a7a3b6b88a39",
+      "firstName": "Evelyn",
+      "lastName": "Wren",
       "genre": "Mystery"
     },
     {
-      "first_name": "Lucas",
-      "last_name": "Archer",
+      "id": "9cbe757d-8e1e-5ab4-bab1-927f126ed00f",
+      "firstName": "Lucas",
+      "lastName": "Archer",
       "genre": "Science Fiction"
     },
     {
-      "first_name": "Isabella",
-      "last_name": "Blake",
+      "id": "e1896575-1bee-5202-904c-3f1b10cdeb25",
+      "firstName": "Isabella",
+      "lastName": "Blake",
       "genre": "Romance"
     },
     {
-      "first_name": "Nathan",
-      "last_name": "Fox",
+      "id": "4d246fc2-3190-55c7-8171-33bc45e110dc",
+      "firstName": "Nathan",
+      "lastName": "Fox",
       "genre": "Thriller"
     },
     {
-      "first_name": "Sophie",
-      "last_name": "Hale",
+      "id": "259c2810-b314-5038-8623-6c28dac0525d",
+      "firstName": "Sophie",
+      "lastName": "Hale",
       "genre": "Fantasy"
     },
     {
-      "first_name": "Oliver",
-      "last_name": "Knight",
+      "id": "a99d0099-8ff6-5e6a-b74c-7991926cc899",
+      "firstName": "Oliver",
+      "lastName": "Knight",
       "genre": "Historical Fiction"
     },
     {
-      "first_name": "Emma",
-      "last_name": "Rivers",
+      "id": "5ea389b4-b280-559c-984f-bf3b5248da5b",
+      "firstName": "Emma",
+      "lastName": "Rivers",
       "genre": "Contemporary"
     },
     {
-      "first_name": "Henry",
-      "last_name": "Stone",
+      "id": "74b9f334-9e27-56ab-84d8-ec91c45472fd",
+      "firstName": "Henry",
+      "lastName": "Stone",
       "genre": "Adventure"
     },
     {
-      "first_name": "Grace",
-      "last_name": "Morgan",
+      "id": "e7bc4ba6-926d-5658-a67d-8204e8c7e0eb",
+      "firstName": "Grace",
+      "lastName": "Morgan",
       "genre": "Young Adult"
     },
     {
-      "first_name": "Liam",
-      "last_name": "Reed",
+      "id": "19889138-baca-5852-a6aa-05169698a24f",
+      "firstName": "Liam",
+      "lastName": "Reed",
       "genre": "Dystopian"
     },
     {
-      "first_name": "Ava",
-      "last_name": "Hunter",
+      "id": "a46ef144-7f1c-5029-a5b7-e8350b2eacb3",
+      "firstName": "Ava",
+      "lastName": "Hunter",
       "genre": "Suspense"
     },
     {
-      "first_name": "Jackson",
-      "last_name": "Blair",
+      "id": "296135cc-aaf1-59c3-a66b-80aa9076d271",
+      "firstName": "Jackson",
+      "lastName": "Blair",
       "genre": "Horror"
     },
     {
-      "first_name": "Zoe",
-      "last_name": "Marshall",
+      "id": "6aaa3149-4bd2-5347-8685-f0574112fecc",
+      "firstName": "Zoe",
+      "lastName": "Marshall",
       "genre": "Science Fantasy"
     },
     {
-      "first_name": "Maxwell",
-      "last_name": "Gray",
+      "id": "a099a341-9d2c-56e9-b694-4d18ef95783b",
+      "firstName": "Maxwell",
+      "lastName": "Gray",
       "genre": "Literary Fiction"
     },
     {
-      "first_name": "Chloe",
-      "last_name": "Bennett",
+      "id": "205bbba0-feb9-56e5-9971-91a25389e23c",
+      "firstName": "Chloe",
+      "lastName": "Bennett",
       "genre": "Historical Romance"
     },
     {
-      "first_name": "Leo",
-      "last_name": "Foster",
+      "id": "d7215f75-67e7-58b6-b85f-0842e7509ca5",
+      "firstName": "Leo",
+      "lastName": "Foster",
       "genre": "Psychological Thriller"
     },
     {
-      "first_name": "Harper",
-      "last_name": "Stone",
+      "id": "f5dfdc4e-c333-5600-ade2-c2dbf7a3103d",
+      "firstName": "Harper",
+      "lastName": "Stone",
       "genre": "Urban Fantasy"
     },
     {
-      "first_name": "Violet",
-      "last_name": "Adams",
+      "id": "eb37195e-8420-5d53-9832-2b65fd52759c",
+      "firstName": "Violet",
+      "lastName": "Adams",
       "genre": "Paranormal"
     },
     {
-      "first_name": "Ethan",
-      "last_name": "Hart",
+      "id": "0031fcc3-4b4d-51cc-820a-a21ec7681dc3",
+      "firstName": "Ethan",
+      "lastName": "Hart",
       "genre": "Action"
     },
     {
-      "first_name": "Luna",
-      "last_name": "Knight",
+      "id": "c931578c-c6dd-5149-a82c-64cdb1e2184f",
+      "firstName": "Luna",
+      "lastName": "Knight",
       "genre": "Supernatural"
     },
     {
-      "first_name": "Miles",
-      "last_name": "Parker",
+      "id": "8dc6bdaf-9afe-58ad-b577-d95dc7666ac8",
+      "firstName": "Miles",
+      "lastName": "Parker",
       "genre": "Humor"
     },
     {
-      "first_name": "Scarlett",
-      "last_name": "Hayes",
+      "id": "c6623606-ce97-5cab-a5ba-67ea2cb7ce0e",
+      "firstName": "Scarlett",
+      "lastName": "Hayes",
       "genre": "Romantic Comedy"
     },
     {
-      "first_name": "Noah",
-      "last_name": "Wells",
+      "id": "a0f053bb-3fbf-5871-a8b3-747ab1a6b7a6",
+      "firstName": "Noah",
+      "lastName": "Wells",
       "genre": "Historical Mystery"
     },
     {
-      "first_name": "Aria",
-      "last_name": "Brooks",
+      "id": "ee6081f0-e7ff-5b93-b8da-f1e5934ddd08",
+      "firstName": "Aria",
+      "lastName": "Brooks",
       "genre": "Young Adult Fantasy"
     },
     {
-      "first_name": "Gabriel",
-      "last_name": "Stone",
+      "id": "20ea7b24-8a0e-5160-9631-74f2c78286fe",
+      "firstName": "Gabriel",
+      "lastName": "Stone",
       "genre": "Science Adventure"
     },
     {
-      "first_name": "Ivy",
-      "last_name": "Montgomery",
+      "id": "c858476f-92dc-56af-90ea-b32bfceaaa3d",
+      "firstName": "Ivy",
+      "lastName": "Montgomery",
       "genre": "Magical Realism"
     },
     {
-      "first_name": "Samuel",
-      "last_name": "Gray",
+      "id": "66796bf1-26cb-5c22-90ca-b9438a16b728",
+      "firstName": "Samuel",
+      "lastName": "Gray",
       "genre": "Crime Fiction"
     },
     {
-      "first_name": "Hazel",
-      "last_name": "Foster",
+      "id": "f6016683-4b6c-5543-a977-45bbc8a5a07c",
+      "firstName": "Hazel",
+      "lastName": "Foster",
       "genre": "Gothic"
     },
     {
-      "first_name": "Elijah",
-      "last_name": "Reed",
+      "id": "a279f9d1-73f0-5484-80f3-d2f6e11a38fb",
+      "firstName": "Elijah",
+      "lastName": "Reed",
       "genre": "Steampunk"
     },
     {
-      "first_name": "Aurora",
-      "last_name": "Fox",
+      "id": "6cdb8fc9-13e1-53a7-9ca9-0269011818df",
+      "firstName": "Aurora",
+      "lastName": "Fox",
       "genre": "Space Opera"
     },
     {
-      "first_name": "Logan",
-      "last_name": "Brooks",
+      "id": "cb2012a9-c6d4-5812-b4be-295729f22d33",
+      "firstName": "Logan",
+      "lastName": "Brooks",
       "genre": "Cyberpunk"
     },
     {
-      "first_name": "Clara",
-      "last_name": "Stone",
+      "id": "a2803866-a888-5869-8207-8f748f2f2814",
+      "firstName": "Clara",
+      "lastName": "Stone",
       "genre": "Time Travel"
     },
     {
-      "first_name": "Finn",
-      "last_name": "Hudson",
+      "id": "99cd22a5-6f79-512e-8bd9-c014326acc07",
+      "firstName": "Finn",
+      "lastName": "Hudson",
       "genre": "Post-Apocalyptic"
     },
     {
-      "first_name": "Linus",
-      "last_name": "Torvalds",
+      "id": "1e9c41cc-b531-5c68-9818-644785da9041",
+      "firstName": "Linus",
+      "lastName": "Torvalds",
       "genre": "Technology"
     },
     {
-      "first_name": "Guido",
-      "last_name": "van Rossum",
+      "id": "bcecce41-8fd6-5757-8910-944cebf83010",
+      "firstName": "Guido",
+      "lastName": "van Rossum",
       "genre": "Technology"
     },
     {
-      "first_name": "Martin",
-      "last_name": "Odersky",
+      "id": "756cd38f-c201-56f8-9c93-68c250c25913",
+      "firstName": "Martin",
+      "lastName": "Odersky",
       "genre": "Technology"
     },
     {
-      "first_name": "James",
-      "last_name": "Gosling",
+      "id": "a566fe65-8b43-533f-b01a-5da0e739a57c",
+      "firstName": "James",
+      "lastName": "Gosling",
       "genre": "Technology"
     },
     {
-      "first_name": "Bjarne",
-      "last_name": "Stroustrup",
+      "id": "ee68a982-a083-5151-a5de-3ca47e18cc2a",
+      "firstName": "Bjarne",
+      "lastName": "Stroustrup",
       "genre": "Technology"
     },
     {
-      "first_name": "Dennis",
-      "last_name": "Ritchie",
+      "id": "383609ed-a2c1-5ce0-a8d2-d8d95780c0ca",
+      "firstName": "Dennis",
+      "lastName": "Ritchie",
       "genre": "Technology"
     },
     {
-      "first_name": "Tim",
-      "last_name": "Berners-Lee",
+      "id": "cf656464-5fa3-5d57-9b10-b0a56ff7a5db",
+      "firstName": "Tim",
+      "lastName": "Berners-Lee",
       "genre": "Technology"
     },
     {
-      "first_name": "Josh",
-      "last_name": "Long",
+      "id": "8e59d53b-2866-5ba3-934a-56fcd3f3d1ac",
+      "firstName": "Josh",
+      "lastName": "Long",
       "genre": "Technology"
     },
     {
-      "first_name": "Rasmus",
-      "last_name": "Lerdorf",
+      "id": "9bd7e390-647b-587e-9570-dbd5eb318f40",
+      "firstName": "Rasmus",
+      "lastName": "Lerdorf",
       "genre": "Technology"
     },
     {
-      "first_name": "Ward",
-      "last_name": "Cunningham",
+      "id": "d030083f-a6b2-55c4-901a-7d37047502a8",
+      "firstName": "Ward",
+      "lastName": "Cunningham",
       "genre": "Technology"
     },
     {
-      "first_name": "Dan",
-      "last_name": "Vega",
+      "id": "bd8807f2-1215-56ba-84d5-4536b7eb9e12",
+      "firstName": "Dan",
+      "lastName": "Vega",
       "genre": "Technology"
     },
     {
-      "first_name": "Anton",
-      "last_name": "Putra",
+      "id": "5dc53e18-f803-5c9c-856c-5f7e6b58f31a",
+      "firstName": "Anton",
+      "lastName": "Putra",
       "genre": "Technology"
     },
     {
-      "first_name": "Larry",
-      "last_name": "Wall",
+      "id": "bed94c6b-72a0-5745-860f-aca1242322f7",
+      "firstName": "Larry",
+      "lastName": "Wall",
       "genre": "Technology"
     },
     {
-      "first_name": "Ken",
-      "last_name": "Thompson",
+      "id": "fcb3ec12-841e-549c-9dd2-feed648f9430",
+      "firstName": "Ken",
+      "lastName": "Thompson",
       "genre": "Technology"
     }
   ]

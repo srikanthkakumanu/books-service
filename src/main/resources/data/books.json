@@ -1,224 +1,356 @@
 {
   "books": [
     {
+      "id": "9d26b580-beeb-5ce8-aed8-d91e1e2d33ac",
       "title": "The Enigma of Elysium",
+      "description": "A mystery title by Evelyn Wren, published by Mystic Press.",
+      "isbn": "9781234567897",
       "publisher": "Mystic Press",
-      "ISBN": "9781234567890"
+      "authorId": "a1fcc431-e7af-56c5-aa67-a7a3b6b88a39"
     },
     {
+      "id": "94a080b8-e473-5e7a-b9d5-434764fe4377",
       "title": "Whispers in the Mist",
+      "description": "A science fiction title by Lucas Archer, published by Gloaming Books.",
+      "isbn": "9789876543217",
       "publisher": "Gloaming Books",
-      "ISBN": "9789876543210"
+      "authorId": "9cbe757d-8e1e-5ab4-bab1-927f126ed00f"
     },
     {
+      "id": "2f62dbf8-22b1-59e2-b56e-7dbd469d8e84",
       "title": "Chronicles of Nebula",
+      "description": "A romance title by Isabella Blake, published by Stellar Publishing.",
+      "isbn": "9782468135791",
       "publisher": "Stellar Publishing",
-      "ISBN": "9782468135790"
+      "authorId": "e1896575-1bee-5202-904c-3f1b10cdeb25"
     },
     {
+      "id": "f92b5948-f250-52d8-958d-7fbb7dccd07c",
       "title": "Midnight Serenade",
+      "description": "A thriller title by Nathan Fox, published by Moonlit Press.",
+      "isbn": "9781357924683",
       "publisher": "Moonlit Press",
-      "ISBN": "9781357924680"
+      "authorId": "4d246fc2-3190-55c7-8171-33bc45e110dc"
     },
     {
+      "id": "0f098f11-92e5-58b0-ad0d-55f8b08ae593",
       "title": "Echoes from Avalon",
+      "description": "A fantasy title by Sophie Hale, published by Camelot Books.",
+      "isbn": "9780123456786",
       "publisher": "Camelot Books",
-      "ISBN": "9780123456789"
+      "authorId": "259c2810-b314-5038-8623-6c28dac0525d"
     },
     {
+      "id": "85458734-cdbb-5e5b-9a05-0869c5dd7b79",
       "title": "Sapphire Skies",
+      "description": "A historical fiction title by Oliver Knight, published by Azure Publications.",
+      "isbn": "9789876543224",
       "publisher": "Azure Publications",
-      "ISBN": "9789876543211"
+      "authorId": "a99d0099-8ff6-5e6a-b74c-7991926cc899"
     },
     {
+      "id": "f3af64b4-148e-5f76-bc8e-505d4d6d347a",
       "title": "The Alchemist's Legacy",
+      "description": "A contemporary title by Emma Rivers, published by Alchemy House.",
+      "isbn": "9782468135807",
       "publisher": "Alchemy House",
-      "ISBN": "9782468135791"
+      "authorId": "5ea389b4-b280-559c-984f-bf3b5248da5b"
     },
     {
+      "id": "aff6b94b-542c-52e9-9646-890539282a19",
       "title": "Crimson Moon",
+      "description": "An adventure title by Henry Stone, published by Bloodstone Press.",
+      "isbn": "9781357924690",
       "publisher": "Bloodstone Press",
-      "ISBN": "9781357924681"
+      "authorId": "74b9f334-9e27-56ab-84d8-ec91c45472fd"
     },
     {
+      "id": "b935ac4e-9027-5c2e-b09f-c2ec480ad85a",
       "title": "Lost in the Labyrinth",
+      "description": "A young adult title by Grace Morgan, published by Minotaur Books.",
+      "isbn": "9780123456793",
       "publisher": "Minotaur Books",
-      "ISBN": "9780123456781"
+      "authorId": "e7bc4ba6-926d-5658-a67d-8204e8c7e0eb"
     },
     {
+      "id": "528ec81d-64a0-5547-9cf1-f19e3bd466cd",
       "title": "Arcane Whispers",
+      "description": "A dystopian title by Liam Reed, published by Mystic Press.",
+      "isbn": "9781234567903",
       "publisher": "Mystic Press",
-      "ISBN": "9781234567891"
+      "authorId": "19889138-baca-5852-a6aa-05169698a24f"
     },
     {
+      "id": "1753b4f8-3210-5906-92ce-241fc31d960b",
       "title": "The Forgotten Codex",
+      "description": "A suspense title by Ava Hunter, published by Gloaming Books.",
+      "isbn": "9789876543231",
       "publisher": "Gloaming Books",
-      "ISBN": "9789876543212"
+      "authorId": "a46ef144-7f1c-5029-a5b7-e8350b2eacb3"
     },
     {
+      "id": "0d6a888d-2314-5812-89b3-ccb447c58607",
       "title": "Starlight Sonata",
+      "description": "A horror title by Jackson Blair, published by Stellar Publishing.",
+      "isbn": "9782468135814",
       "publisher": "Stellar Publishing",
-      "ISBN": "9782468135792"
+      "authorId": "296135cc-aaf1-59c3-a66b-80aa9076d271"
     },
     {
+      "id": "b2fa787f-eb97-51ad-8504-92b24ebc4446",
       "title": "Eternal Ember",
+      "description": "A science fantasy title by Zoe Marshall, published by Moonlit Press.",
+      "isbn": "9781357924706",
       "publisher": "Moonlit Press",
-      "ISBN": "9781357924682"
+      "authorId": "6aaa3149-4bd2-5347-8685-f0574112fecc"
     },
     {
+      "id": "f3c51b9e-3388-5be9-bb8f-54f2bedc5ae9",
       "title": "Dreams of Avalon",
+      "description": "A literary fiction title by Maxwell Gray, published by Camelot Books.",
+      "isbn": "9780123456809",
       "publisher": "Camelot Books",
-      "ISBN": "9780123456782"
+      "authorId": "a099a341-9d2c-56e9-b694-4d18ef95783b"
     },
     {
+      "id": "172fb07d-35d0-5d6b-b5dc-25009343b040",
       "title": "Celestial Harmony",
+      "description": "A historical romance title by Chloe Bennett, published by Azure Publications.",
+      "isbn": "9789876543248",
       "publisher": "Azure Publications",
-      "ISBN": "9789876543213"
+      "authorId": "205bbba0-feb9-56e5-9971-91a25389e23c"
     },
     {
+      "id": "41653a46-4c22-5918-ae86-0ee3d0f61db8",
       "title": "The Oracle's Veil",
+      "description": "A psychological thriller title by Leo Foster, published by Alchemy House.",
+      "isbn": "9782468135821",
       "publisher": "Alchemy House",
-      "ISBN": "9782468135793"
+      "authorId": "d7215f75-67e7-58b6-b85f-0842e7509ca5"
     },
     {
+      "id": "761f791f-ceaa-5d34-a63b-30cc9dc0e887",
       "title": "Obsidian Shadows",
+      "description": "An urban fantasy title by Harper Stone, published by Bloodstone Press.",
+      "isbn": "9781357924713",
       "publisher": "Bloodstone Press",
-      "ISBN": "9781357924683"
+      "authorId": "f5dfdc4e-c333-5600-ade2-c2dbf7a3103d"
     },
     {
+      "id": "bb508176-df3c-5b0e-854b-e650c58c220c",
       "title": "Whispers of the Wind",
+      "description": "A paranormal title by Violet Adams, published by Minotaur Books.",
+      "isbn": "9780123456816",
       "publisher": "Minotaur Books",
-      "ISBN": "9780123456783"
+      "authorId": "eb37195e-8420-5d53-9832-2b65fd52759c"
     },
     {
+      "id": "9e5c090d-27a1-50dc-88cc-77067db2f9b2",
       "title": "Eloquent JavaScript, Third Edition",
+      "description": "An action title by Ethan Hart, published by No Starch Press.",
+      "isbn": "9781593279509",
       "publisher": "No Starch Press",
-      "ISBN": "9781593279509"
+      "authorId": "0031fcc3-4b4d-51cc-820a-a21ec7681dc3"
     },
     {
+      "id": "13df3698-f88a-5a5d-a5d4-dd6e4f3c8166",
       "title": "Practical Modern JavaScript",
+      "description": "A supernatural title by Luna Knight, published by O'Reilly Media.",
+      "isbn": "9781491943533",
       "publisher": "O'Reilly Media",
-      "ISBN": "9781491943533"
+      "authorId": "c931578c-c6dd-5149-a82c-64cdb1e2184f"
     },
     {
+      "id": "67937cf5-f656-552d-b3c5-8b015979d8fd",
       "title": "Understanding ECMAScript 6",
+      "description": "A humor title by Miles Parker, published by No Starch Press.",
+      "isbn": "9781593277574",
       "publisher": "No Starch Press",
-      "ISBN": "9781593277574"
+      "authorId": "8dc6bdaf-9afe-58ad-b577-d95dc7666ac8"
     },
     {
+      "id": "a62bd8f0-6401-5ab9-b885-d9e03833e6b3",
       "title": "Speaking JavaScript",
+      "description": "A romantic comedy title by Scarlett Hayes, published by O'Reilly Media.",
+      "isbn": "9781449365035",
       "publisher": "O'Reilly Media",
-      "ISBN": "9781449365035"
+      "authorId": "c6623606-ce97-5cab-a5ba-67ea2cb7ce0e"
     },
     {
+      "id": "db2defeb-f44f-54ed-a02f-8ae00c418c98",
       "title": "Learning JavaScript Design Patterns",
+      "description": "A historical mystery title by Noah Wells, published by O'Reilly Media.",
+      "isbn": "9781449331818",
       "publisher": "O'Reilly Media",
-      "ISBN": "9781449331818"
+      "authorId": "a0f053bb-3fbf-5871-a8b3-747ab1a6b7a6"
     },
     {
+      "id": "331a4ac7-1b1f-5eb3-b76c-ccc7f0344842",
       "title": "Clean Code: A Handbook of Agile Software Craftsmanship",
+      "description": "A young adult fantasy title by Aria Brooks, published by Prentice Hall.",
+      "isbn": "9780132350884",
       "publisher": "Prentice Hall",
-      "ISBN": "9780132350884"
+      "authorId": "ee6081f0-e7ff-5b93-b8da-f1e5934ddd08"
     },
     {
+      "id": "9f0a7814-211a-56af-9403-f2acc3fac7ee",
       "title": "Design Patterns: Elements of Reusable Object-Oriented Software",
+      "description": "A science adventure title by Gabriel Stone, published by Addison-Wesley Professional.",
+      "isbn": "9780201633610",
       "publisher": "Addison-Wesley Professional",
-      "ISBN": "9780201633610"
+      "authorId": "20ea7b24-8a0e-5160-9631-74f2c78286fe"
     },
     {
+      "id": "bf7572bf-2c38-5770-84c5-5efb75dc0edb",
       "title": "The Pragmatic Programmer: Your Journey to Mastery",
+      "description": "A magical realism title by Ivy Montgomery, published by Addison-Wesley Professional.",
+      "isbn": "9780135957059",
       "publisher": "Addison-Wesley Professional",
-      "ISBN": "9780135957059"
+      "authorId": "c858476f-92dc-56af-90ea-b32bfceaaa3d"
     },
     {
+      "id": "a317ff86-daa3-534d-8fe8-566d9177c1aa",
       "title": "Refactoring: Improving the Design of Existing Code",
+      "description": "A crime fiction title by Samuel Gray, published by Addison-Wesley Professional.",
+      "isbn": "9780201485677",
       "publisher": "Addison-Wesley Professional",
-      "ISBN": "9780201485677"
+      "authorId": "66796bf1-26cb-5c22-90ca-b9438a16b728"
     },
     {
+      "id": "4ab97a2a-f61b-51fd-acf6-d9b396dbdf85",
       "title": "Clean Architecture: A Craftsman's Guide to Software Structure and Design",
+      "description": "A gothic title by Hazel Foster, published by Prentice Hall.",
+      "isbn": "9780134494166",
       "publisher": "Prentice Hall",
-      "ISBN": "9780134494166"
+      "authorId": "f6016683-4b6c-5543-a977-45bbc8a5a07c"
     },
     {
+      "id": "d56d64fb-a5c0-5a0e-8305-666cbb694aa3",
       "title": "Effective Java",
+      "description": "A steampunk title by Elijah Reed, published by Addison-Wesley Professional.",
+      "isbn": "9780134685991",
       "publisher": "Addison-Wesley Professional",
-      "ISBN": "9780134685991"
+      "authorId": "a279f9d1-73f0-5484-80f3-d2f6e11a38fb"
     },
     {
+      "id": "b720f97b-7814-5245-a8f6-e35eb702cd3e",
       "title": "You Don't Know JS (book series)",
+      "description": "A space opera title by Aurora Fox, published by O'Reilly Media.",
+      "isbn": "9780000000002",
       "publisher": "O'Reilly Media",
-      "ISBN": "Various ISBNs"
+      "authorId": "6cdb8fc9-13e1-53a7-9ca9-0269011818df"
     },
     {
+      "id": "9a027bad-d70d-5518-ae6b-e4a933ce7873",
       "title": "Python Crash Course",
+      "description": "A cyberpunk title by Logan Brooks, published by No Starch Press.",
+      "isbn": "9781593276034",
       "publisher": "No Starch Press",
-      "ISBN": "9781593276034"
+      "authorId": "cb2012a9-c6d4-5812-b4be-295729f22d33"
     },
     {
+      "id": "2dd4f73b-93e6-5dea-b7a7-31e15130267d",
       "title": "Data Science for Business",
+      "description": "A time travel title by Clara Stone, published by O'Reilly Media.",
+      "isbn": "9781449361327",
       "publisher": "O'Reilly Media",
-      "ISBN": "9781449361327"
+      "authorId": "a2803866-a888-5869-8207-8f748f2f2814"
     },
     {
+      "id": "682c2523-a7ba-5445-a865-40684a39a4aa",
       "title": "Introduction to the Theory of Computation",
+      "description": "A post-apocalyptic title by Finn Hudson, published by Cengage Learning.",
+      "isbn": "9781133187790",
       "publisher": "Cengage Learning",
-      "ISBN": "9781133187790"
+      "authorId": "99cd22a5-6f79-512e-8bd9-c014326acc07"
     },
     {
+      "id": "a840549b-5c01-52c3-ad95-d6a45379dcb3",
       "title": "The Art of Computer Programming",
+      "description": "A technology title by Linus Torvalds, published by Addison-Wesley Professional.",
+      "isbn": "9780000000019",
       "publisher": "Addison-Wesley Professional",
-      "ISBN": "Various ISBNs"
+      "authorId": "1e9c41cc-b531-5c68-9818-644785da9041"
     },
     {
+      "id": "b0866666-5604-5296-abdd-c29446b64a54",
       "title": "Deep Learning",
+      "description": "A technology title by Guido van Rossum, published by MIT Press.",
+      "isbn": "9780262035613",
       "publisher": "MIT Press",
-      "ISBN": "9780262035613"
+      "authorId": "bcecce41-8fd6-5757-8910-944cebf83010"
     },
     {
+      "id": "a594eb76-ad71-534d-84ae-dbe64aa1fd65",
       "title": "The Mythical Man-Month: Essays on Software Engineering",
+      "description": "A technology title by Martin Odersky, published by Addison-Wesley Professional.",
+      "isbn": "9780201835953",
       "publisher": "Addison-Wesley Professional",
-      "ISBN": "9780201835953"
+      "authorId": "756cd38f-c201-56f8-9c93-68c250c25913"
     },
     {
+      "id": "34ee9753-40b2-5143-954a-57a7ad46498b",
       "title": "Cracking the Coding Interview",
+      "description": "A technology title by James Gosling, published by CareerCup.",
+      "isbn": "9780984782857",
       "publisher": "CareerCup",
-      "ISBN": "9780984782857"
+      "authorId": "a566fe65-8b43-533f-b01a-5da0e739a57c"
     },
     {
+      "id": "4cc2e85f-948b-5b85-9951-8ee3197c3aec",
       "title": "The Elements of Statistical Learning",
+      "description": "A technology title by Bjarne Stroustrup, published by Springer.",
+      "isbn": "9780387848570",
       "publisher": "Springer",
-      "ISBN": "9780387848570"
+      "authorId": "ee68a982-a083-5151-a5de-3ca47e18cc2a"
     },
     {
+      "id": "09b439d8-c52f-55cf-bbba-b8b4eecd3fec",
       "title": "Introduction to Algorithms",
+      "description": "A technology title by Dennis Ritchie, published by MIT Press.",
+      "isbn": "9780262033848",
       "publisher": "MIT Press",
-      "ISBN": "9780262033848"
+      "authorId": "383609ed-a2c1-5ce0-a8d2-d8d95780c0ca"
     },
     {
+      "id": "b8143dd1-d95f-5e06-8d6d-8eaf621b5941",
       "title": "Head First Design Patterns",
+      "description": "A technology title by Tim Berners-Lee, published by O'Reilly Media.",
+      "isbn": "9780596007126",
       "publisher": "O'Reilly Media",
-      "ISBN": "9780596007126"
+      "authorId": "cf656464-5fa3-5d57-9b10-b0a56ff7a5db"
     },
     {
+      "id": "240d7459-d4f2-56ea-9a26-425bb78d00f1",
       "title": "Code: The Hidden Language of Computer Hardware and Software",
+      "description": "A technology title by Josh Long, published by Microsoft Press.",
+      "isbn": "9780735611313",
       "publisher": "Microsoft Press",
-      "ISBN": "9780735611313"
+      "authorId": "8e59d53b-2866-5ba3-934a-56fcd3f3d1ac"
     },
     {
+      "id": "98de84ed-421f-5e14-868d-acabe8df2727",
       "title": "The C Programming Language",
+      "description": "A technology title by Rasmus Lerdorf, published by Prentice Hall.",
+      "isbn": "9780131103627",
       "publisher": "Prentice Hall",
-      "ISBN": "9780131103627"
+      "authorId": "9bd7e390-647b-587e-9570-dbd5eb318f40"
     },
     {
+      "id": "6a4b22ec-1b0e-5e1a-92ba-7356868625b1",
       "title": "Computer Networks",
+      "description": "A technology title by Ward Cunningham, published by Prentice Hall.",
+      "isbn": "9780132126953",
       "publisher": "Prentice Hall",
-      "ISBN": "9780132126953"
+      "authorId": "d030083f-a6b2-55c4-901a-7d37047502a8"
     },
     {
+      "id": "035863d1-89d9-5461-b1ca-f8c8b54dd14e",
       "title": "Artificial Intelligence: A Modern Approach",
+      "description": "A technology title by Dan Vega, published by Prentice Hall.",
+      "isbn": "9780136042594",
       "publisher": "Prentice Hall",
-      "ISBN": "9780136042594"
+      "authorId": "bd8807f2-1215-56ba-84d5-4536b7eb9e12"
     }
   ]
 }
