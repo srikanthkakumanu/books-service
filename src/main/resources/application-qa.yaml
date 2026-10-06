@@ -3,4 +3,4 @@ spring:
     import:
       - optional:vault://secret/data/db/booksdb/qa
       - optional:vault://secret/data/keycloak/qa
-      - optional:configserver:http://cloud-config-service:9311
+      - optional:configserver:${CONFIG_SERVER_URL:http://cloud-config-service:9311/config}

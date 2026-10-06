@@ -230,8 +230,9 @@ The JWT is validated against Keycloak's public JWKS endpoint (`KEYCLOAK_ISSUER_U
 | Operation | HTTP / Endpoint | Public | User (`ROLE_USER`) | Manager / Admin (`ROLE_ADMIN`, `ROLE_MANAGER`) |
 |---|---|:---:|:---:|:---:|
 | **Ping Service** | `GET /api/books/ping` | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| **Health / Info** | `GET /actuator/health`, `info` | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| **OpenAPI / Swagger** | `GET /api-docs/**`, `/swagger-ui/**` | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| **Health / Probes** | `GET /actuator/health`, `/actuator/health/**` | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| **Info / Diagnostics** | `/actuator/**` except GET health | :x: (401) | :x: (403) | ADMIN only; MANAGER 403 |
+| **OpenAPI / Swagger** | `GET /api-docs/**`, `/swagger-ui/**` | :x: (401) | :x: (403) | ADMIN only; MANAGER 403 |
 | **List / Search Books** | `GET /api/books/**` | :x: (401) | :white_check_mark: | :white_check_mark: |
 | **Create Book** | `POST /api/books` | :x: (401) | :white_check_mark: (Owner bound to caller) | :white_check_mark: (Can set any `userId`) |
 | **Update Book** | `PUT /api/books` | :x: (401) | :white_check_mark: (Owned books only; no owner transfer) | :white_check_mark: (Any book; can transfer owner) |
@@ -253,9 +254,8 @@ Base URL: `http://localhost:9151`
 |---|---|---|---|
 | `GET` | `/api/books/ping` | Liveness / connectivity probe | `200 OK` (`Pong`) |
 | `GET` | `/actuator/health` | Spring Boot Actuator health status | `200 OK` (JSON) |
-| `GET` | `/actuator/info` | Application and build information | `200 OK` (JSON) |
-| `GET` | `/swagger-ui.html` | Swagger UI visual documentation | `200 OK` (HTML) |
-| `GET` | `/api-docs` | OpenAPI 3.0 JSON specification | `200 OK` (JSON) |
+
+`/actuator/info`, other diagnostics, `/swagger-ui.html` and `/api-docs` require an ADMIN bearer token. Health details are shown only to authorized administrators.
 
 ### Book Endpoints
 
@@ -656,7 +656,7 @@ The service includes pre-configured sample datasets:
 
 ### Java 27 & Gradle Launch Setup
 
-The project is built on **Java 27**, **Spring Boot 4.1.1**, and **Gradle 8.14.3**:
+The project is built on **Java 27**, **Spring Boot 4.1.1**, and **Gradle 9.8.0**, using this repository's independent checksum-verified Groovy wrapper:
 
 ```groovy
 java {
@@ -667,16 +667,15 @@ java {
 ```
 
 > [!IMPORTANT]
-> **Gradle Daemon Launcher vs. Compilation Toolchain**:
-> Gradle 8.14.3's Groovy parser does not natively support execution on JDK 27 (fails with `Unsupported class file major version 71`).
-> **Solution**: Point `JAVA_HOME` to a supported JDK (such as JDK 21) to launch the Gradle wrapper daemon. Gradle's configured Java Toolchain will automatically detect, compile, and execute all application and test code on **Java 27**:
+> **Java 27 Launcher And Toolchain**:
+> Set `JAVA_HOME` to Java 27. The Gradle wrapper, daemon, compilation and tests all use Java 27:
 >
 > ```bash
 > # Verify installed JVMs on macOS:
 > /usr/libexec/java_home -V
 >
-> # Launch Gradle with JDK 21 while targeting Java 27:
-> JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test
+> # Launch Gradle directly with JDK 27:
+> JAVA_HOME=$(/usr/libexec/java_home -v 27) ./gradlew test
 > ```
 
 ### Running Unit & MVC Tests
@@ -684,7 +683,7 @@ java {
 Unit and MockMvc tests run without Docker or external dependencies:
 
 ```bash
-JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test
+JAVA_HOME=$(/usr/libexec/java_home -v 27) ./gradlew test
 ```
 
 Included unit test suites:
@@ -698,7 +697,7 @@ Included unit test suites:
 Integration tests validate PostgreSQL Flyway migrations, JPA entity mappings, and `theuser`/`bookadmin` least-privilege permissions against an isolated PostgreSQL 18 container managed by Testcontainers. Requires Docker daemon to be running:
 
 ```bash
-JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew integrationTest
+JAVA_HOME=$(/usr/libexec/java_home -v 27) ./gradlew integrationTest
 ```
 
 ### Building Application Artifacts
@@ -706,7 +705,7 @@ JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew integrationTest
 To compile and package the executable Spring Boot layered JAR:
 
 ```bash
-JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew clean bootJar
+JAVA_HOME=$(/usr/libexec/java_home -v 27) ./gradlew clean bootJar
 ```
 
 The output JAR is generated at `build/libs/books-service-1.0.jar`.
@@ -743,7 +742,7 @@ export SPRING_PROFILES_ACTIVE=dev,seed
 export SPRING_ACTIVE_PROFILE=dev
 
 # 5. Launch application
-JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew bootRun
+JAVA_HOME=$(/usr/libexec/java_home -v 27) ./gradlew bootRun
 ```
 
 ### Option B: Complete Stack via Docker Compose
@@ -755,7 +754,7 @@ JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew bootRun
 
 ```bash
 # 1. Build the application bootJar first
-JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew bootJar
+JAVA_HOME=$(/usr/libexec/java_home -v 27) ./gradlew bootJar
 
 # 2. Validate docker compose configuration
 docker compose config --quiet
@@ -777,49 +776,37 @@ docker compose down -v
 
 ## Docker & Container Deployment
 
-The [`Dockerfile`](Dockerfile) utilizes a **multi-stage build** with Spring Boot layer extraction for optimized container caching and security:
+The [Dockerfile](Dockerfile) runs the executable `build/libs/books-service-1.0.jar` directly on Temurin 27 as non-root `appuser:appgroup`. Curl is installed for readiness checks on port 9151. The restricted Docker context includes only the JAR, not source, local configuration or credentials. Container-aware heap sizing uses `MaxRAMPercentage=75`; set memory limits and leave headroom for non-heap memory.
 
-```dockerfile
-# Stage 1: Builder extracts Spring Boot JAR layers
-FROM eclipse-temurin:27-jre-alpine AS builder
-WORKDIR /application
-ARG JAR_FILE=books-service-1.0.jar
-COPY build/libs/${JAR_FILE} ./
-RUN java -Djarmode=layertools -jar ${JAR_FILE} extract
-
-# Stage 2: Minimal hardened runtime image
-FROM eclipse-temurin:27-jre-alpine
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-WORKDIR /application
-
-COPY --from=builder /application/dependencies/ ./
-COPY --from=builder /application/spring-boot-loader/ ./
-COPY --from=builder /application/snapshot-dependencies/ ./
-COPY --from=builder /application/application/ ./
-
-USER appuser:appgroup
-ENTRYPOINT ["java", "-XX:+UseParallelGC", "-XX:GCTimeRatio=4", "-XX:AdaptiveSizePolicyWeight=90", "-XX:MinHeapFreeRatio=20", "-XX:MaxHeapFreeRatio=40", "-XX:+HeapDumpOnOutOfMemoryError", "-Xms512m", "-Xmx512m", "-Djava.security.egd=file:/dev/./urandom", "org.springframework.boot.loader.launch.JarLauncher"]
+```bash
+docker build -t books-service:latest .
+ruby bin/verify-image.rb
 ```
 
-### Key Container Features
-- **Non-root Execution**: Runs as unprivileged user `appuser:appgroup`.
-- **Spring Boot Layer Extraction**: Dependencies and snapshot libraries are cached in distinct Docker layers, speeding up CI/CD builds.
-- **JVM Performance Tuning**: Tuned for containerized environments (`-XX:+UseParallelGC`, `-Xms512m`, `-Xmx512m`, fast entropy `/dev/./urandom`).
+The repeatable smoke requires Docker Desktop (`host.docker.internal`) and Ruby with WEBrick/OpenSSL. It creates an isolated network and temporary PostgreSQL 18 with memory-backed data, using `root/root`, `bookadmin/bookadmin` and `theuser/theuser`. Temporary RSA keys and OIDC/JWKS metadata drive actual JWT decoding. Config/Vault imports and Eureka are disabled only for this smoke. Existing databases, volumes and Keycloak realms are untouched; temporary containers and the network are cleaned up.
+
+The image is tested with a read-only root filesystem, writable `/tmp`, dropped capabilities, `no-new-privileges` and a 512 MiB limit. Checks cover Flyway/table ownership, runtime-role sessions, signed JWT rejection for wrong signature/issuer/expiry, public ping/probes, ADMIN-only JSON/YAML/Swagger/diagnostics, a persisted USER book with JWT-derived ownership, and denied non-owner deletion. Actual JSON and YAML contracts declare HTTP `bearerAuth` with JWT format and global security requirements. Public ping/probe GET operations explicitly override those requirements; catalog GET retains bearer security. Infrastructure configuration tests cover exact public paths, unchanged non-GET/private operations and absent path documents.
+
+### Probe Semantics
+
+Standalone and shared Compose probe `/actuator/health/readiness`. Readiness includes `readinessState,db` because data APIs require PostgreSQL. Liveness tracks application state only. A database outage returns readiness 503 while liveness stays 200; a shared database outage can make all instances unready, so callers/ingress must handle that condition. Anonymous health responses omit details; ADMIN can inspect components.
+
+Pool acquisition defaults to 3000 ms (`SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT`), with 1000 ms connection validation, to bound ordinary unavailable-database checks within the 5-second probe timeout. Hung network queries still require driver/network timeout policy. Readiness does not establish Config/Vault/Keycloak/Eureka availability.
+
+This increment is not normal company-platform Keycloak/audience validation, shared configuration/discovery, DB recovery, production load, concurrent-write safety or full-platform acceptance.
 
 ---
 
-## Observability & Actuator
-
-The service provides comprehensive production observability:
+The service exposes the following observability endpoints; production telemetry and acceptance remain pending:
 
 | Endpoint | Access | Purpose |
 |---|---|---|
 | `GET /actuator/health` | Public | Comprehensive health probe (PostgreSQL, disk space, liveness). |
-| `GET /actuator/info` | Public | Exposes build info, git commit hashes, Java version, and OS. |
-| `GET /actuator/metrics` | Authenticated | Application metrics (JVM memory, garbage collection, HTTP requests). |
-| `GET /actuator/prometheus` | Authenticated | Prometheus-formatted metrics scrape endpoint. |
-| `GET /actuator/loggers` | Authenticated | Dynamically inspect and adjust logging levels at runtime. |
-| `GET /actuator/threaddump` | Authenticated | Snapshot of JVM platform and virtual threads. |
+| `GET /actuator/info` | ADMIN | Exposes build info, git commit hashes, Java version, and OS. |
+| `GET /actuator/metrics` | ADMIN | Application metrics (JVM memory, garbage collection, HTTP requests). |
+| `GET /actuator/prometheus` | ADMIN | Prometheus-formatted metrics scrape endpoint when its exporter is present. |
+| `GET /actuator/loggers` | ADMIN | Inspect logging levels; changes use the supported write operation. |
+| `GET /actuator/threaddump` | ADMIN | Snapshot of JVM platform and virtual threads. |
 
 ### Virtual Threads
 
@@ -903,3 +890,16 @@ curl -H "Authorization: Bearer $ACCESS_TOKEN" http://localhost:9151/api/authors?
 ```
 
 When editing the service, keep framework dependencies out of `books.domain`, keep schema changes in Flyway, and update the gateway/platform docs when externally exposed routes change.
+
+
+## JWT Audience Contract
+
+Spring Boot's managed JWT decoder requires the configured issuer and the audience `company-platform-api`. Override the audience with `KEYCLOAK_API_AUDIENCE` when running locally against a different API client. A correctly signed token with a missing or different `aud` claim returns HTTP 401; realm roles do not bypass audience validation.
+
+`ruby bin/verify-image.rb` checks the actual packaged application's RSA/JWKS decoder with accepted, missing and incorrect audiences, while retaining catalog, ownership, documentation and probe checks. These checks use a controlled local issuer, not genuine Keycloak realm acceptance.
+
+## Repository CI
+
+[Build workflow](.github/workflows/build.yml) runs independently on pushes, pull requests and manual dispatch with Temurin Java 27 on Ubuntu 24.04. It verifies this repository's wrapper JAR and Gradle distribution checksum, runs `check integrationTest bootJar` with fresh tasks and Gradle deprecations treated as failures, builds the service image and retains test reports for seven days. Actions are pinned to verified commit SHAs; permissions are read-only and checkout credentials are not persisted.
+
+PostgreSQL integration tests use Docker/Testcontainers; no production database or platform credentials are required. The workflow definition passes local actionlint/structural checks, but has not run on GitHub while these changes remain uncommitted/unpushed. Image building in CI does not replace the separate runtime/probe smoke evidence recorded in the checkpoint.
