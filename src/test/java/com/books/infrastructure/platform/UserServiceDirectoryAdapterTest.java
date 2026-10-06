@@ -9,7 +9,6 @@ import com.books.domain.model.UserStanding;
 import com.books.support.StubPlatform;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.client.RestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -98,31 +97,66 @@ class UserServiceDirectoryAdapterTest {
 
 	@Test
 	void anUnreachablePlatformIsReportedAsUnavailable() {
-		var properties = properties("http://localhost:1", StubPlatform.CLIENT_SECRET);
-		var configuration = new PlatformDirectoryConfiguration();
-		var builder = configuration.directRestClientBuilder(properties);
-		var adapter = configuration.userServiceDirectoryAdapter(builder, properties,
-				configuration.serviceTokenProvider(builder, properties));
+		var adapter = adapter(properties("http://localhost:1", StubPlatform.CLIENT_SECRET, false));
 
 		assertThatExceptionOfType(UserDirectoryUnavailableException.class).isThrownBy(() -> adapter.standingOf(user));
 	}
 
 	@Test
+	void serviceNamesAreResolvedThroughTheLoadBalancerWhenItIsOn() {
+		platform.user(user.toString(), "ACTIVE");
+		var seenHosts = new java.util.ArrayList<String>();
+		String stubAuthority = java.net.URI.create(platform.url()).getAuthority();
+		// Stands in for the registry lookup: notes the service name and sends the call to the stub.
+		org.springframework.http.client.ClientHttpRequestInterceptor resolver = (request, body, execution) -> {
+			seenHosts.add(request.getURI().getHost());
+			var resolved = java.net.URI.create(request.getURI().toString().replace(request.getURI().getAuthority(),
+					stubAuthority));
+			return execution.execute(new org.springframework.http.client.support.HttpRequestWrapper(request) {
+				@Override
+				public java.net.URI getURI() {
+					return resolved;
+				}
+			}, body);
+		};
+		var properties = new PlatformDirectoryProperties("http://user-service", "http://auth-service",
+				StubPlatform.CLIENT_ID, StubPlatform.CLIENT_SECRET, true, Duration.ofSeconds(2), Duration.ofSeconds(5));
+		var tokens = new ServiceTokenProvider(
+				PlatformDirectoryConfiguration.client(properties, resolver, properties.authServiceUrl()), properties);
+		var adapter = new UserServiceDirectoryAdapter(
+				PlatformDirectoryConfiguration.client(properties, resolver, properties.userServiceUrl()), tokens);
+
+		assertThat(adapter.standingOf(user)).isEqualTo(UserStanding.ACTIVE);
+		assertThat(seenHosts).containsExactly("auth-service", "user-service");
+	}
+
+	@Test
+	void turningTheLoadBalancerOnWithoutOneIsRefusedAtStartup() {
+		var properties = properties("http://user-service", StubPlatform.CLIENT_SECRET, true);
+
+		org.assertj.core.api.Assertions.assertThatIllegalStateException()
+				.isThrownBy(() -> PlatformDirectoryConfiguration.client(properties, null, properties.userServiceUrl()));
+	}
+
+	@Test
 	void thePropertiesNeverPrintTheSecret() {
-		assertThat(properties(platform.url(), "s3cret-value")).asString().doesNotContain("s3cret-value")
+		assertThat(properties(platform.url(), "s3cret-value", false)).asString().doesNotContain("s3cret-value")
 				.contains("books-service");
 	}
 
 	private UserServiceDirectoryAdapter adapter(String clientSecret) {
-		var properties = properties(platform.url(), clientSecret);
-		var configuration = new PlatformDirectoryConfiguration();
-		RestClient.Builder builder = configuration.directRestClientBuilder(properties);
-		return configuration.userServiceDirectoryAdapter(builder, properties,
-				configuration.serviceTokenProvider(builder, properties));
+		return adapter(properties(platform.url(), clientSecret, false));
 	}
 
-	private static PlatformDirectoryProperties properties(String url, String clientSecret) {
-		return new PlatformDirectoryProperties(url, url, StubPlatform.CLIENT_ID, clientSecret, false,
+	private static UserServiceDirectoryAdapter adapter(PlatformDirectoryProperties properties) {
+		var tokens = new ServiceTokenProvider(
+				PlatformDirectoryConfiguration.client(properties, null, properties.authServiceUrl()), properties);
+		return new UserServiceDirectoryAdapter(
+				PlatformDirectoryConfiguration.client(properties, null, properties.userServiceUrl()), tokens);
+	}
+
+	private static PlatformDirectoryProperties properties(String url, String clientSecret, boolean loadBalanced) {
+		return new PlatformDirectoryProperties(url, url, StubPlatform.CLIENT_ID, clientSecret, loadBalanced,
 				Duration.ofSeconds(2), Duration.ofSeconds(5));
 	}
 }
